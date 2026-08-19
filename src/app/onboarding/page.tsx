@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
+import { SyncAndNotificationBar } from '@/components/dashboard/SyncAndNotificationBar';
 import { 
   UserCheck, 
   Scale, 
@@ -22,6 +24,13 @@ import {
 import { useAppState } from '@/context/AppStateContext';
 import { WeightUnit } from '@/lib/types';
 
+const avatarSeeds = ['Mimi', 'Sasha', 'Lilly', 'Tigger', 'Bella', 'Zoe', 'Kitty', 'Nova', 'Cleo', 'Milo', 'Sage', 'Iris'] as const;
+
+const avatarOptions = avatarSeeds.map((seed, index) => ({
+  id: `avatar-${index + 1}`,
+  src: `https://api.dicebear.com/9.x/personas/svg?seed=${encodeURIComponent(seed)}&size=128&radius=24&backgroundColor=ecfccb&backgroundColor=f8fafc&backgroundColor=e2e8f0&backgroundColor=dbeafe&backgroundColor=f3e8ff&backgroundColor=fef3c7`,
+}));
+
 export default function OnboardingPage() {
   const router = useRouter();
   const { user, updateProfile, resetDemoData } = useAppState();
@@ -37,19 +46,6 @@ export default function OnboardingPage() {
 
   const [copiedCode, setCopiedCode] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      setFullName(user.full_name);
-      setAvatarUrl(user.avatar_url || '');
-      setInitialWeight(user.initial_weight.toString());
-      setTargetWeight(user.target_weight.toString());
-      setStepGoal(user.step_goal.toString());
-      setWeeklyGoal(user.weekly_checkpoint_goal.toString());
-      setWeightUnit(user.weight_unit);
-      setShareExactWeight(user.share_exact_weight);
-    }
-  }, [user]);
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +100,7 @@ export default function OnboardingPage() {
         {/* Left 2 Cols - Main Settings Form */}
         <div className="md:col-span-2 space-y-6">
           <Card>
-            <form onSubmit={handleSaveProfile} className="space-y-5">
+            <form key={user?.id ?? 'profile'} onSubmit={handleSaveProfile} className="space-y-5">
               
               <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 pb-2">
                 1. Basic Info
@@ -123,6 +119,44 @@ export default function OnboardingPage() {
                   onChange={(e) => setAvatarUrl(e.target.value)}
                   placeholder="https://..."
                 />
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Choose an avatar</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Pick a modern profile look or keep your custom image URL.</p>
+                </div>
+
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  {avatarOptions.map((option, index) => {
+                    const isSelected = avatarUrl === option.src;
+
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => setAvatarUrl(option.src)}
+                        className={`group relative rounded-2xl border p-2 transition-all cursor-pointer ${
+                          isSelected
+                            ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/30'
+                            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-emerald-400 hover:-translate-y-0.5'
+                        }`}
+                        aria-label={`Select avatar ${index + 1}`}
+                      >
+                        <div className="overflow-hidden rounded-xl bg-white/60 dark:bg-slate-900/40">
+                          <Image
+                            src={option.src}
+                            alt=""
+                            width={128}
+                            height={128}
+                            unoptimized
+                            className="w-full aspect-square object-cover"
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 pb-2 pt-2">
@@ -262,7 +296,8 @@ export default function OnboardingPage() {
 
         {/* Right 1 Col - Buddy Code Card & Tools */}
         <div className="space-y-6">
-          
+          <SyncAndNotificationBar />
+
           {/* Invite Code Card */}
           <Card glow="emerald">
             <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">

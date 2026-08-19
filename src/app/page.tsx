@@ -10,7 +10,6 @@ import { DailyMetricForm } from '@/components/dashboard/DailyMetricForm';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { StreakShieldCard } from '@/components/dashboard/StreakShieldCard';
 import { WeeklyLeaderboardCard } from '@/components/dashboard/WeeklyLeaderboardCard';
-import { SyncAndNotificationBar } from '@/components/dashboard/SyncAndNotificationBar';
 import { LogWorkoutModal } from '@/components/dashboard/LogWorkoutModal';
 import { 
   Footprints, 
@@ -77,9 +76,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-
-      {/* Device Sync & Push Notifications Control Bar */}
-      <SyncAndNotificationBar />
 
       {/* Daily Input Form */}
       <DailyMetricForm onOpenWorkoutModal={() => setIsWorkoutModalOpen(true)} />

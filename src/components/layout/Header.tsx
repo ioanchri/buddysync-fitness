@@ -3,12 +3,12 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Activity, Sun, Moon, Database, Sparkles, Settings, LogOut, User, Users, Bell, CalendarClock, Zap, CheckCircle2 } from 'lucide-react';
+import { Activity, Sun, Moon, Database, Sparkles, Settings, LogOut, User, Bell, CalendarClock, Zap, CheckCircle2 } from 'lucide-react';
 import { useAppState } from '@/context/AppStateContext';
 
 export const Header: React.FC = () => {
   const router = useRouter();
-  const { user, isDemoMode, theme, toggleTheme, logout, switchAccount, jointInvites, nudges } = useAppState();
+  const { user, isDemoMode, theme, toggleTheme, logout, jointInvites, nudges } = useAppState();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>([]);
 
@@ -114,7 +114,7 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Right Controls */}
-        <div className="flex items-center gap-2.5 relative">
+        <div className="flex items-center gap-2.5 relative ml-auto shrink-0">
           {user && (
             <div className="relative">
               <button
@@ -132,8 +132,8 @@ export const Header: React.FC = () => {
               </button>
 
               {isNotificationsOpen && (
-                <div className="absolute right-0 mt-2 w-[320px] max-w-[85vw] rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-3 z-50">
-                  <div className="flex items-center justify-between mb-2 px-1">
+                <div className="absolute right-0 sm:right-0 left-1/2 -translate-x-1/2 sm:translate-x-0 mt-2 w-[min(320px,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-3 z-50">
+                  <div className="flex items-center justify-between mb-2 px-1 gap-2">
                     <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">Notifications</h3>
                     {notifications.length > 0 && (
                       <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">{notifications.length} updates</span>
@@ -201,14 +201,6 @@ export const Header: React.FC = () => {
                 )}
                 <Settings className="w-4 h-4 text-slate-400 hidden sm:inline" />
               </Link>
-
-              <button
-                onClick={switchAccount}
-                className="p-2 rounded-xl text-slate-500 hover:text-cyan-500 hover:bg-cyan-500/10 transition-colors cursor-pointer"
-                title="Quick Switch Person"
-              >
-                <Users className="w-4 h-4" />
-              </button>
 
               <button
                 onClick={handleLogout}

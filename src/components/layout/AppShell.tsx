@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -8,7 +9,14 @@ import { LogWorkoutModal } from '@/components/dashboard/LogWorkoutModal';
 import { AppStateProvider } from '@/context/AppStateContext';
 
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const pathname = usePathname();
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
+
+  const isAuthRoute = pathname === '/auth';
+
+  if (isAuthRoute) {
+    return <AppStateProvider>{children}</AppStateProvider>;
+  }
 
   return (
     <AppStateProvider>
