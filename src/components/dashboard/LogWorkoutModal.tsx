@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Dumbbell, Clock, Flame, Image as ImageIcon, MessageSquare } from 'lucide-react';
-import { WorkoutCategory, WorkoutIntensity } from '@/lib/types';
+import { Workout, WorkoutCategory, WorkoutIntensity } from '@/lib/types';
 import { useAppState } from '@/context/AppStateContext';
 import { format } from 'date-fns';
 import confetti from 'canvas-confetti';
@@ -13,6 +13,7 @@ import confetti from 'canvas-confetti';
 interface LogWorkoutModalProps {
   isOpen: boolean;
   onClose: () => void;
+  workoutToEdit?: Workout | null;
 }
 
 const CATEGORIES: WorkoutCategory[] = [
@@ -28,39 +29,69 @@ const CATEGORIES: WorkoutCategory[] = [
 
 const INTENSITIES: WorkoutIntensity[] = ['Low', 'Medium', 'High', 'Extreme'];
 
-export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClose }) => {
-  const { addWorkout } = useAppState();
+export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClose, workoutToEdit }) => {
+  const { addWorkout, updateWorkout } = useAppState();
 
   const [title, setTitle] = useState('');
+  const [loggedDate, setLoggedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [category, setCategory] = useState<WorkoutCategory>('Running');
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [intensity, setIntensity] = useState<WorkoutIntensity>('High');
   const [notes, setNotes] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const isEditing = Boolean(workoutToEdit);
+
+  useEffect(() => {
+    if (isOpen && workoutToEdit) {
+      setTitle(workoutToEdit.title || '');
+      setLoggedDate(workoutToEdit.date || format(new Date(), 'yyyy-MM-dd'));
+      setCategory(workoutToEdit.category || 'Running');
+      setDurationMinutes(workoutToEdit.duration_minutes || 30);
+      setIntensity(workoutToEdit.intensity || 'High');
+      setNotes(workoutToEdit.notes || '');
+      setPhotoUrl(workoutToEdit.photo_url || '');
+      return;
+    }
+
+    if (isOpen && !workoutToEdit) {
+      setTitle('');
+      setLoggedDate(format(new Date(), 'yyyy-MM-dd'));
+      setCategory('Running');
+      setDurationMinutes(30);
+      setIntensity('High');
+      setNotes('');
+      setPhotoUrl('');
+    }
+  }, [isOpen, workoutToEdit]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
-    addWorkout({
-      date: format(new Date(), 'yyyy-MM-dd'),
+    const payload = {
+      date: loggedDate,
       title: title.trim(),
       category,
       duration_minutes: Number(durationMinutes),
       intensity,
       notes: notes.trim() || undefined,
       photo_url: photoUrl.trim() || undefined,
-    });
+    };
 
-    try {
-      confetti({
-        particleCount: 60,
-        spread: 60,
-        origin: { y: 0.7 },
-      });
-    } catch (e) {}
+    if (isEditing && workoutToEdit) {
+      await updateWorkout(workoutToEdit.id, payload);
+    } else {
+      addWorkout(payload);
+      try {
+        confetti({
+          particleCount: 60,
+          spread: 60,
+          origin: { y: 0.7 },
+        });
+      } catch (e) {}
+    }
 
-    // Reset form
     setTitle('');
     setNotes('');
     setPhotoUrl('');
@@ -71,8 +102,8 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClos
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Log New Workout Session"
-      subtitle="Track your exercise details to celebrate progress with your buddy"
+      title={isEditing ? 'Edit Workout Session' : 'Log New Workout Session'}
+      subtitle={isEditing ? 'Update the details for this workout.' : 'Track your exercise details to celebrate progress with your buddy'}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         
@@ -85,6 +116,34 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClos
           required
           leftIcon={<Dumbbell className="w-4 h-4 text-emerald-500" />}
         />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+              Workout Date
+            </label>
+            <Input
+              type="date"
+              value={loggedDate}
+              onChange={(e) => setLoggedDate(e.target.value)}
+              max={format(new Date(), 'yyyy-MM-dd')}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+              Duration (Mins)
+            </label>
+            <Input
+              type="number"
+              min="1"
+              max="300"
+              value={durationMinutes}
+              onChange={(e) => setDurationMinutes(Number(e.target.value))}
+              leftIcon={<Clock className="w-4 h-4 text-cyan-500" />}
+            />
+          </div>
+        </div>
 
         {/* Category & Duration */}
         <div className="grid grid-cols-2 gap-3">
@@ -103,19 +162,6 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClos
             </select>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
-              Duration (Mins)
-            </label>
-            <Input
-              type="number"
-              min="1"
-              max="300"
-              value={durationMinutes}
-              onChange={(e) => setDurationMinutes(Number(e.target.value))}
-              leftIcon={<Clock className="w-4 h-4 text-cyan-500" />}
-            />
-          </div>
         </div>
 
         {/* Intensity Selector */}
@@ -172,7 +218,7 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClos
             Cancel
           </Button>
           <Button variant="primary" type="submit">
-            Save & Publish to Feed
+            {isEditing ? 'Save Changes' : 'Save & Publish to Feed'}
           </Button>
         </div>
 

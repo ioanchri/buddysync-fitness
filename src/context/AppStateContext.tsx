@@ -38,6 +38,7 @@ interface AppStateContextType {
   useStreakShield: () => { success: boolean; message: string };
   sendNudge: (buddyId: string, type: 'workout' | 'water' | 'high_five') => void;
   addWorkout: (workout: Omit<Workout, 'id' | 'user_id' | 'created_at'>) => void;
+  updateWorkout: (id: string, updates: Partial<Workout>) => Promise<void>;
   deleteWorkout: (id: string) => void;
   inviteBuddyByCode: (code: string) => Promise<{ success: boolean; message: string }>;
   addReaction: (itemId: string, emoji: string, message?: string) => void;
@@ -343,7 +344,24 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const refreshData = useCallback(async () => {
     if (!isSupabaseConfigured || !supabase) return;
     const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (authUser) await fetchUserData(authUser.id);
+    if (authUser) {
+      setUser((prev) => prev ?? {
+        id: authUser.id,
+        full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Athlete',
+        avatar_url: authUser.user_metadata?.avatar_url || '',
+        initial_weight: 75,
+        target_weight: 70,
+        step_goal: 10000,
+        weekly_checkpoint_goal: 5,
+        water_goal_ml: 2500,
+        streak_shields: 2,
+        streak_days: 1,
+        weight_unit: 'kg',
+        share_exact_weight: true,
+        invite_code: 'LOADING',
+      });
+      await fetchUserData(authUser.id);
+    }
   }, [fetchUserData]);
 
   // ─── Mount + Auth state listener ──────────────────────────────────────────
@@ -371,6 +389,21 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         setIsLoadingUser(true);
+        setUser({
+          id: session.user.id,
+          full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Athlete',
+          avatar_url: session.user.user_metadata?.avatar_url || '',
+          initial_weight: 75,
+          target_weight: 70,
+          step_goal: 10000,
+          weekly_checkpoint_goal: 5,
+          water_goal_ml: 2500,
+          streak_shields: 2,
+          streak_days: 1,
+          weight_unit: 'kg',
+          share_exact_weight: true,
+          invite_code: 'LOADING',
+        });
         await fetchUserData(session.user.id);
         setIsLoadingUser(false);
       } else {
@@ -835,12 +868,55 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, ...prev]);
   };
 
+  const updateWorkout = async (id: string, updates: Partial<Workout>) => {
+    if (!user) return;
+
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('workouts')
+        .update(updates)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select();
+
+      if (!error && data && data.length > 0) {
+        const updatedWorkout = data[0] as Workout;
+        setWorkouts(prev => prev.map(w => w.id === id ? updatedWorkout : w));
+        setSharedFeed(prev => prev.map(item => {
+          if (item.type === 'workout' && item.workout?.id === id) {
+            return { ...item, workout: updatedWorkout, date: updatedWorkout.date };
+          }
+          return item;
+        }));
+      }
+      return;
+    }
+
+    setWorkouts(prev => {
+      const updated = prev.map(w => w.id === id ? { ...w, ...updates } : w);
+      localStorage.setItem(`buddysync_workouts_${user.id}`, JSON.stringify(updated));
+      return updated;
+    });
+
+    setSharedFeed(prev => prev.map(item => {
+      if (item.type === 'workout' && item.workout?.id === id) {
+        return {
+          ...item,
+          workout: item.workout ? { ...item.workout, ...updates } : item.workout,
+          date: updates.date || item.date,
+        };
+      }
+      return item;
+    }));
+  };
+
   const deleteWorkout = async (id: string) => {
     if (!user) return;
 
     if (isSupabaseConfigured && supabase) {
       await supabase.from('workouts').delete().eq('id', id).eq('user_id', user.id);
       setWorkouts(prev => prev.filter(w => w.id !== id));
+      setSharedFeed(prev => prev.filter(item => !(item.type === 'workout' && item.workout?.id === id)));
       return;
     }
 
@@ -849,6 +925,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       localStorage.setItem(`buddysync_workouts_${user.id}`, JSON.stringify(updated));
       return updated;
     });
+    setSharedFeed(prev => prev.filter(item => !(item.type === 'workout' && item.workout?.id === id)));
   };
 
   // ─── Buddy Connection ─────────────────────────────────────────────────────
@@ -1061,6 +1138,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       useStreakShield,
       sendNudge,
       addWorkout,
+      updateWorkout,
       deleteWorkout,
       inviteBuddyByCode,
       addReaction,

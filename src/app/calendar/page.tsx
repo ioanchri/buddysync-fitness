@@ -42,9 +42,10 @@ export default function CalendarPage() {
 
   // Invite modal form fields
   const [selectedBuddyId, setSelectedBuddyId] = useState(buddies[0]?.id || '');
-  const [inviteActivity, setInviteActivity] = useState('Joint 5k Trail Run & Core');
+  const [inviteActivity, setInviteActivity] = useState('Walking');
   const [inviteTime, setInviteTime] = useState('09:00');
   const [inviteLocation, setInviteLocation] = useState('Central Park Entrance / Gym');
+  const activityOptions = ['Walking', 'Running', 'Tennis', 'Gym Lifting', 'Gym Cardio', 'Basketball', 'Football'];
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
@@ -281,14 +282,34 @@ export default function CalendarPage() {
             </select>
           </div>
 
-          <Input
-            label="Activity / Workout Type"
-            placeholder="e.g. 5k Outdoor Run or Leg Day Gym"
-            value={inviteActivity}
-            onChange={(e) => setInviteActivity(e.target.value)}
-            required
-            leftIcon={<Dumbbell className="w-4 h-4 text-emerald-500" />}
-          />
+          <div>
+            <label className="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5">
+              Activity / Workout Type
+            </label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {activityOptions.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setInviteActivity(option)}
+                  className={`px-2.5 py-1.5 rounded-full text-[11px] font-bold border transition-colors ${
+                    inviteActivity === option
+                      ? 'bg-emerald-500 text-white border-emerald-500'
+                      : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+            <Input
+              placeholder="e.g. 5k Outdoor Run or Leg Day Gym"
+              value={inviteActivity}
+              onChange={(e) => setInviteActivity(e.target.value)}
+              required
+              leftIcon={<Dumbbell className="w-4 h-4 text-emerald-500" />}
+            />
+          </div>
 
           <Input
             label="Start Time"

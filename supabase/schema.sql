@@ -162,6 +162,9 @@ CREATE POLICY "Users and buddies view workouts" ON public.workouts
 CREATE POLICY "Users insert own workouts" ON public.workouts
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+CREATE POLICY "Users update own workouts" ON public.workouts
+  FOR UPDATE USING (auth.uid() = user_id);
+
 CREATE POLICY "Users delete own workouts" ON public.workouts
   FOR DELETE USING (auth.uid() = user_id);
 

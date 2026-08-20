@@ -28,6 +28,7 @@ import { format } from 'date-fns';
 export default function DashboardPage() {
   const { user, dailyLogs, workouts, deleteWorkout } = useAppState();
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
+  const [editingWorkout, setEditingWorkout] = useState<ReturnType<typeof useAppState>['workouts'][number] | null>(null);
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const todayLog = dailyLogs.find(l => l.date === todayStr);
@@ -43,6 +44,16 @@ export default function DashboardPage() {
   const weightChangeSoFar = Math.abs(initialWeight - currentWeight);
   const weightProgressPercent = Math.min(100, Math.max(0, (weightChangeSoFar / totalWeightToChange) * 100));
   const stepProgressPercent = Math.min(100, Math.max(0, (currentSteps / stepGoal) * 100));
+
+  const openAddWorkoutModal = () => {
+    setEditingWorkout(null);
+    setIsWorkoutModalOpen(true);
+  };
+
+  const openEditWorkoutModal = (workout: ReturnType<typeof useAppState>['workouts'][number]) => {
+    setEditingWorkout(workout);
+    setIsWorkoutModalOpen(true);
+  };
 
   return (
     <div className="space-y-6 pb-12">
@@ -162,7 +173,7 @@ export default function DashboardPage() {
                 variant="outline"
                 size="sm"
                 className="mt-3"
-                onClick={() => setIsWorkoutModalOpen(true)}
+                onClick={openAddWorkoutModal}
               >
                 Log Your First Workout
               </Button>
@@ -190,6 +201,13 @@ export default function DashboardPage() {
                       <span className="text-sm font-black text-slate-900 dark:text-white">{wo.duration_minutes}</span>
                       <span className="text-xs text-slate-400 font-medium ml-1">mins</span>
                     </div>
+                    <button
+                      onClick={() => openEditWorkoutModal(wo)}
+                      className="p-2 text-slate-400 hover:text-emerald-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      title="Edit workout"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                    </button>
                     <button
                       onClick={() => deleteWorkout(wo.id)}
                       className="p-2 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -248,7 +266,11 @@ export default function DashboardPage() {
       {/* Log Workout Modal */}
       <LogWorkoutModal
         isOpen={isWorkoutModalOpen}
-        onClose={() => setIsWorkoutModalOpen(false)}
+        workoutToEdit={editingWorkout}
+        onClose={() => {
+          setIsWorkoutModalOpen(false);
+          setEditingWorkout(null);
+        }}
       />
 
     </div>

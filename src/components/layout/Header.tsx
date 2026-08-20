@@ -12,6 +12,24 @@ export const Header: React.FC = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>([]);
 
+  React.useEffect(() => {
+    if (!user?.id) {
+      setSeenNotificationIds([]);
+      return;
+    }
+
+    const stored = localStorage.getItem(`buddysync_seen_notifications_${user.id}`);
+    if (stored) {
+      try {
+        setSeenNotificationIds(JSON.parse(stored));
+      } catch {
+        setSeenNotificationIds([]);
+      }
+    } else {
+      setSeenNotificationIds([]);
+    }
+  }, [user?.id]);
+
   const pendingInvites = useMemo(() => {
     if (!user) return [];
     return jointInvites.filter((invite) => invite.buddy_id === user.id && invite.status === 'pending');
@@ -71,11 +89,11 @@ export const Header: React.FC = () => {
   const toggleNotifications = () => {
     setIsNotificationsOpen((prev) => {
       const next = !prev;
-      if (next) {
-        setSeenNotificationIds((existing) => {
-          const merged = new Set([...existing, ...notifications.map((item) => item.id)]);
-          return Array.from(merged);
-        });
+      if (next && user?.id) {
+        const merged = new Set([...seenNotificationIds, ...notifications.map((item) => item.id)]);
+        const nextSeen = Array.from(merged);
+        setSeenNotificationIds(nextSeen);
+        localStorage.setItem(`buddysync_seen_notifications_${user.id}`, JSON.stringify(nextSeen));
       }
       return next;
     });
