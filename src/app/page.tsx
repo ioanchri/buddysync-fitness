@@ -23,7 +23,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useAppState } from '@/context/AppStateContext';
-import { format } from 'date-fns';
+import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 
 export default function DashboardPage() {
   const { user, dailyLogs, workouts, deleteWorkout } = useAppState();
@@ -33,8 +33,8 @@ export default function DashboardPage() {
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const todayLog = dailyLogs.find(l => l.date === todayStr);
 
-  const currentSteps = todayLog?.steps || 8420;
-  const currentWeight = todayLog?.weight || user?.initial_weight || 73.5;
+  const currentSteps = todayLog?.steps ?? 0;
+  const currentWeight = todayLog?.weight ?? user?.initial_weight ?? 73.5;
   const targetWeight = user?.target_weight || 70.0;
   const initialWeight = user?.initial_weight || 78.5;
   const stepGoal = user?.step_goal || 10000;
@@ -44,6 +44,15 @@ export default function DashboardPage() {
   const weightChangeSoFar = Math.abs(initialWeight - currentWeight);
   const weightProgressPercent = Math.min(100, Math.max(0, (weightChangeSoFar / totalWeightToChange) * 100));
   const stepProgressPercent = Math.min(100, Math.max(0, (currentSteps / stepGoal) * 100));
+
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+  const workoutsThisWeek = workouts.filter(w => isWithinInterval(new Date(w.date), { start: weekStart, end: weekEnd }));
+  const weeklyCheckpointGoal = user?.weekly_checkpoint_goal || 5;
+  const remainingWorkouts = Math.max(0, weeklyCheckpointGoal - workoutsThisWeek.length);
+  const heroMessage = remainingWorkouts > 0
+    ? `You're ${remainingWorkouts} workout${remainingWorkouts === 1 ? '' : 's'} away from smashing this week's accountability checkpoint with your squad!`
+    : `You've hit this week's accountability checkpoint! Keep the momentum going with your squad!`;
 
   const openAddWorkoutModal = () => {
     setEditingWorkout(null);
@@ -70,7 +79,7 @@ export default function DashboardPage() {
               Welcome back, {user?.full_name || 'Athlete'}! 💪
             </h1>
             <p className="text-sm text-emerald-50 mt-1 max-w-xl font-medium">
-              You&apos;re 4 workouts away from smashing this week&apos;s accountability checkpoint with your squad!
+              {heroMessage}
             </p>
           </div>
 
@@ -136,10 +145,10 @@ export default function DashboardPage() {
         {/* Weekly Checkpoint Metric Card */}
         <MetricCard
           title="Weekly Workout Checkpoint"
-          currentValue={`${workouts.length}`}
-          targetValue={`${user?.weekly_checkpoint_goal || 5}`}
+          currentValue={`${workoutsThisWeek.length}`}
+          targetValue={`${weeklyCheckpointGoal}`}
           unit="sessions"
-          progressPercent={Math.min(100, (workouts.length / (user?.weekly_checkpoint_goal || 5)) * 100)}
+          progressPercent={Math.min(100, (workoutsThisWeek.length / weeklyCheckpointGoal) * 100)}
           icon={<Trophy className="w-6 h-6" />}
           accentColor="purple"
           subtitle="Stay consistent with your accountability squad!"

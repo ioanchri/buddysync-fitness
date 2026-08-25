@@ -1,17 +1,38 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Trophy, Send, Zap, Footprints } from 'lucide-react';
+import { Trophy, Send, Zap, Footprints, Dumbbell, Check } from 'lucide-react';
 import { useAppState } from '@/context/AppStateContext';
+import { format, startOfWeek, endOfWeek, isWithinInterval, getWeek } from 'date-fns';
 
 export const WeeklyLeaderboardCard: React.FC = () => {
-  const { user, buddies, dailyLogs, sendNudge } = useAppState();
+  const { user, buddies, dailyLogs, workouts, sharedFeed, sendNudge } = useAppState();
+  const [sentToId, setSentToId] = useState<string | null>(null);
 
-  const userTodayLog = dailyLogs[0];
-  const userSteps = userTodayLog?.steps || 10400;
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const userTodayLog = dailyLogs.find(l => l.date === todayStr);
+  const userSteps = userTodayLog?.steps ?? 0;
+
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+  const isThisWeek = (dateStr: string) => isWithinInterval(new Date(dateStr), { start: weekStart, end: weekEnd });
+
+  const userWorkoutsThisWeek = workouts.filter(w => isThisWeek(w.date)).length;
+
+  const getLatestBuddyLog = (buddyId: string) => {
+    const logs = sharedFeed.filter(item => item.type === 'daily_log' && item.user_id === buddyId && item.log);
+    if (logs.length === 0) return null;
+    return logs.reduce((a, b) => (a.date > b.date ? a : b));
+  };
+
+  const handleHighFive = (buddyId: string) => {
+    sendNudge(buddyId, 'high_five');
+    setSentToId(buddyId);
+    setTimeout(() => setSentToId(null), 2000);
+  };
 
   // Build squad standings
   const leaderboard = [
@@ -20,19 +41,23 @@ export const WeeklyLeaderboardCard: React.FC = () => {
       name: `${user?.full_name} (You)`,
       avatar: user?.avatar_url,
       steps: userSteps,
-      workouts: 4,
-      streak: user?.streak_days || 7,
-      rank: 1,
+      workouts: userWorkoutsThisWeek,
+      streak: user?.streak_days || 0,
     },
-    ...buddies.map((b, idx) => ({
-      id: b.id,
-      name: b.full_name,
-      avatar: b.avatar_url,
-      steps: 13420 - idx * 2100,
-      workouts: 3,
-      streak: b.streak_days || 5,
-      rank: idx + 2,
-    }))
+    ...buddies.map((b) => {
+      const latestLog = getLatestBuddyLog(b.id);
+      const buddyWorkoutsThisWeek = sharedFeed.filter(
+        item => item.type === 'workout' && item.user_id === b.id && isThisWeek(item.date)
+      ).length;
+      return {
+        id: b.id,
+        name: b.full_name,
+        avatar: b.avatar_url,
+        steps: latestLog?.log?.steps ?? 0,
+        workouts: buddyWorkoutsThisWeek,
+        streak: b.streak_days || 0,
+      };
+    })
   ].sort((a, b) => b.steps - a.steps);
 
   return (
@@ -47,7 +72,7 @@ export const WeeklyLeaderboardCard: React.FC = () => {
             <p className="text-xs text-slate-500 dark:text-slate-400">Weekly step volume & workouts ranking</p>
           </div>
         </div>
-        <Badge variant="purple">Week 34 Challenge</Badge>
+        <Badge variant="purple">Week {getWeek(new Date())} Challenge</Badge>
       </div>
 
       <div className="space-y-2">
@@ -80,6 +105,11 @@ export const WeeklyLeaderboardCard: React.FC = () => {
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1">
+                      <Dumbbell className="w-3 h-3 text-emerald-500" />
+                      {item.workouts} this wk
+                    </span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
                       <Zap className="w-3 h-3 text-amber-500" />
                       {item.streak}d streak
                     </span>
@@ -93,10 +123,10 @@ export const WeeklyLeaderboardCard: React.FC = () => {
                     variant="ghost"
                     size="sm"
                     className="text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-500/10"
-                    onClick={() => sendNudge(item.id, 'high_five')}
-                    leftIcon={<Send className="w-3 h-3" />}
+                    onClick={() => handleHighFive(item.id)}
+                    leftIcon={sentToId === item.id ? <Check className="w-3 h-3 text-emerald-500" /> : <Send className="w-3 h-3" />}
                   >
-                    High Five
+                    {sentToId === item.id ? 'Sent!' : 'High Five'}
                   </Button>
                 </div>
               )}

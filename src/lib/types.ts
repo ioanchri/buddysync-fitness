@@ -1,13 +1,16 @@
 export type WeightUnit = 'kg' | 'lbs';
 
 export type WorkoutCategory = 
-  | 'Running' 
-  | 'Weightlifting' 
-  | 'Cycling' 
-  | 'Yoga' 
-  | 'HIIT' 
-  | 'Walking' 
-  | 'Swimming' 
+  | 'Walking'
+  | 'Running'
+  | 'Gym'
+  | 'Weightlifting'
+  | 'Tennis'
+  | 'Football'
+  | 'Basketball'
+  | 'Yoga'
+  | 'Cycling'
+  | 'Swimming'
   | 'Other';
 
 export type WorkoutIntensity = 'Low' | 'Medium' | 'High' | 'Extreme';
@@ -81,7 +84,7 @@ export interface JointWorkoutInvite {
   scheduled_at: string;
   activity_type: string;
   location_notes?: string;
-  status: 'pending' | 'accepted' | 'declined';
+  status: 'pending' | 'accepted' | 'declined' | 'completed' | 'missed';
   created_at?: string;
 }
 

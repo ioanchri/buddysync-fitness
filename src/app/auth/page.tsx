@@ -36,6 +36,15 @@ export default function AuthPage() {
     }
   }, []);
 
+  // Already signed in? Send the user back to the dashboard instead of showing the auth form.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const isRecovery = window.location.hash.includes('type=recovery');
+    if (user && !isRecovery && mode !== 'reset') {
+      router.replace('/');
+    }
+  }, [user, mode, router]);
+
   const resetForm = (nextMode: AuthMode) => {
     setAuthMessage(null);
     setEmail('');

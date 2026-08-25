@@ -3,12 +3,12 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Activity, Sun, Moon, Database, Sparkles, Settings, LogOut, User, Bell, CalendarClock, Zap, CheckCircle2 } from 'lucide-react';
+import { Activity, Sun, Moon, Settings, LogOut, User, Bell, CalendarClock, Zap, CheckCircle2 } from 'lucide-react';
 import { useAppState } from '@/context/AppStateContext';
 
 export const Header: React.FC = () => {
   const router = useRouter();
-  const { user, isDemoMode, theme, toggleTheme, logout, jointInvites, nudges } = useAppState();
+  const { user, theme, toggleTheme, logout, jointInvites, nudges } = useAppState();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>([]);
 
@@ -110,26 +110,8 @@ export const Header: React.FC = () => {
           </div>
           <div>
             <span className="text-xl font-extrabold tracking-tight buddysync-glow-text">BuddySync</span>
-            <span className="hidden sm:inline-block ml-2 text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              Accountability
-            </span>
           </div>
         </Link>
-
-        {/* Center Mode Indicator */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300">
-          {isDemoMode ? (
-            <>
-              <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-              <span>Offline / Demo Mode</span>
-            </>
-          ) : (
-            <>
-              <Database className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Supabase Cloud Sync</span>
-            </>
-          )}
-        </div>
 
         {/* Right Controls */}
         <div className="flex items-center gap-2.5 relative ml-auto shrink-0">

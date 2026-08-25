@@ -19,7 +19,8 @@ import {
   Check, 
   RotateCcw, 
   ShieldCheck, 
-  Sparkles 
+  Sparkles,
+  Database
 } from 'lucide-react';
 import { useAppState } from '@/context/AppStateContext';
 import { WeightUnit } from '@/lib/types';
@@ -33,7 +34,7 @@ const avatarOptions = avatarSeeds.map((seed, index) => ({
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user, updateProfile, resetDemoData } = useAppState();
+  const { user, isDemoMode, updateProfile, resetDemoData } = useAppState();
 
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || '');
@@ -297,6 +298,26 @@ export default function OnboardingPage() {
         {/* Right 1 Col - Buddy Code Card & Tools */}
         <div className="space-y-6">
           <SyncAndNotificationBar />
+
+          {/* Sync Status Card */}
+          <Card>
+            <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+              Data Sync Status
+            </h3>
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300">
+              {isDemoMode ? (
+                <>
+                  <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
+                  <span>Offline / Demo Mode — data saved to this browser only</span>
+                </>
+              ) : (
+                <>
+                  <Database className="w-4 h-4 text-emerald-500" />
+                  <span>Supabase Cloud Sync — data saved to your account</span>
+                </>
+              )}
+            </div>
+          </Card>
 
           {/* Invite Code Card */}
           <Card glow="emerald">

@@ -12,6 +12,7 @@ import {
   NudgeNotification
 } from '@/lib/types';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { sendBrowserNotification } from '@/lib/notifications';
 import { format, subDays } from 'date-fns';
 
 interface AppStateContextType {
@@ -43,7 +44,7 @@ interface AppStateContextType {
   inviteBuddyByCode: (code: string) => Promise<{ success: boolean; message: string }>;
   addReaction: (itemId: string, emoji: string, message?: string) => void;
   createWorkoutInvite: (invite: { buddyId: string; scheduledAt: string; activityType: string; locationNotes?: string }) => void;
-  respondToInvite: (inviteId: string, status: 'accepted' | 'declined') => void;
+  respondToInvite: (inviteId: string, status: 'accepted' | 'declined' | 'completed' | 'missed') => void;
   resetDemoData: () => void;
   refreshData: () => Promise<void>;
 }
@@ -87,7 +88,7 @@ const generateDeterministicLogs = (userId: string): DailyLog[] => {
   const stepPreset = [9500, 10400, 11200, 8900, 10100, 12300, 10800];
   const waterPreset = [2000, 2500, 2250, 1750, 2500, 2750, 2500];
 
-  for (let i = 6; i >= 0; i--) {
+  for (let i = 6; i >= 1; i--) {
     const d = subDays(new Date(), i);
     logs.push({
       id: `log-${userId}-${i}`,
@@ -98,7 +99,7 @@ const generateDeterministicLogs = (userId: string): DailyLog[] => {
       water_ml: waterPreset[6 - i],
     });
   }
-  return logs;
+  return logs.sort((a, b) => b.date.localeCompare(a.date));
 };
 
 const generateDeterministicWorkouts = (userId: string): Workout[] => [
@@ -107,7 +108,7 @@ const generateDeterministicWorkouts = (userId: string): Workout[] => [
     user_id: userId,
     date: format(subDays(new Date(), 1), 'yyyy-MM-dd'),
     title: 'High Intensity Interval Training',
-    category: 'HIIT',
+    category: 'Gym',
     duration_minutes: 45,
     intensity: 'High',
     notes: 'Sweaty session! Smashing burpees & kettlebell swings.',
@@ -161,9 +162,13 @@ const generateInitialBadges = (): MilestoneBadge[] => [
 
 const AppStateContext = createContext<AppStateContextType | undefined>(undefined);
 
+// Shared localStorage keys so demo accounts (Alex/Jordan) can "notify" each other within the same browser.
+const NUDGES_STORAGE_KEY = 'buddysync_nudges';
+const JOINT_INVITES_STORAGE_KEY = 'buddysync_joint_invites';
+
 export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mounted, setMounted] = useState(false);
-  const [isLoadingUser, setIsLoadingUser] = useState(isSupabaseConfigured);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   // Demo mode state
@@ -372,6 +377,11 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setTheme(currentTheme);
     document.documentElement.classList.toggle('dark', currentTheme === 'dark');
 
+    const savedNudges = localStorage.getItem(NUDGES_STORAGE_KEY);
+    if (savedNudges) {
+      try { setNudges(JSON.parse(savedNudges)); } catch (e) {}
+    }
+
     if (!isSupabaseConfigured || !supabase) {
       // Demo mode: restore from localStorage
       const savedAllUsers = localStorage.getItem('buddysync_all_users');
@@ -382,6 +392,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (savedActiveUser) {
         try { setUser(JSON.parse(savedActiveUser)); } catch (e) {}
       }
+      setIsLoadingUser(false);
       return;
     }
 
@@ -489,20 +500,38 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
     ]);
 
-    setJointInvites([
-      {
-        id: 'invite-1',
-        host_id: buddyObj.id,
-        host_name: buddyObj.full_name,
-        buddy_id: user.id,
-        buddy_name: user.full_name,
-        scheduled_at: new Date(Date.now() + 86400000 * 2).toISOString(),
-        activity_type: 'Leg Day & Core Workout',
-        location_notes: 'Metro Fitness Gym - Main Floor',
-        status: 'pending',
-        created_at: new Date().toISOString(),
+    const savedInvites = localStorage.getItem(JOINT_INVITES_STORAGE_KEY);
+    if (savedInvites) {
+      try { setJointInvites(JSON.parse(savedInvites)); } catch (e) {
+        setJointInvites([{
+          id: 'invite-1',
+          host_id: buddyObj.id,
+          host_name: buddyObj.full_name,
+          buddy_id: user.id,
+          buddy_name: user.full_name,
+          scheduled_at: new Date(Date.now() + 86400000 * 2).toISOString(),
+          activity_type: 'Leg Day & Core Workout',
+          location_notes: 'Metro Fitness Gym - Main Floor',
+          status: 'pending',
+          created_at: new Date().toISOString(),
+        }]);
       }
-    ]);
+    } else {
+      setJointInvites([
+        {
+          id: 'invite-1',
+          host_id: buddyObj.id,
+          host_name: buddyObj.full_name,
+          buddy_id: user.id,
+          buddy_name: user.full_name,
+          scheduled_at: new Date(Date.now() + 86400000 * 2).toISOString(),
+          activity_type: 'Leg Day & Core Workout',
+          location_notes: 'Metro Fitness Gym - Main Floor',
+          status: 'pending',
+          created_at: new Date().toISOString(),
+        }
+      ]);
+    }
   }, [user?.id, mounted]);
 
   useEffect(() => {
@@ -814,7 +843,20 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       message: messages[type],
       created_at: new Date().toISOString(),
     };
-    setNudges(prev => [newNudge, ...prev]);
+    setNudges(prev => {
+      const updated = [newNudge, ...prev];
+      // Shared storage key so the buddy sees it once they're the active demo account.
+      localStorage.setItem(NUDGES_STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+
+    const buddyName = buddies.find(b => b.id === buddyId)?.full_name || 'your buddy';
+    const confirmationTitles = {
+      workout: `⚡ Workout nudge sent to ${buddyName}`,
+      water: `💧 Hydration reminder sent to ${buddyName}`,
+      high_five: `🙌 High Five sent to ${buddyName}`,
+    };
+    sendBrowserNotification(confirmationTitles[type], { body: newNudge.message });
   };
 
   // ─── Workouts ─────────────────────────────────────────────────────────────
@@ -1091,15 +1133,36 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       status: 'pending',
       created_at: new Date().toISOString(),
     };
-    setJointInvites(prev => [newInvite, ...prev]);
+    setJointInvites(prev => {
+      const updated = [newInvite, ...prev];
+      localStorage.setItem(JOINT_INVITES_STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+    sendBrowserNotification('📅 Joint workout invite sent!', {
+      body: `Invited ${buddyObj.full_name} to ${activityType}.`,
+    });
   };
 
-  const respondToInvite = async (inviteId: string, status: 'accepted' | 'declined') => {
+  const respondToInvite = async (inviteId: string, status: 'accepted' | 'declined' | 'completed' | 'missed') => {
     // Optimistic update
-    setJointInvites(prev => prev.map(inv => inv.id === inviteId ? { ...inv, status } : inv));
+    setJointInvites(prev => {
+      const updated = prev.map(inv => inv.id === inviteId ? { ...inv, status } : inv);
+      if (!isSupabaseConfigured) localStorage.setItem(JOINT_INVITES_STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
 
     if (isSupabaseConfigured && supabase) {
       await supabase.from('joint_workout_invites').update({ status, updated_at: new Date().toISOString() }).eq('id', inviteId);
+    } else {
+      const statusLabels: Record<typeof status, string> = {
+        accepted: 'accepted ✅',
+        declined: 'declined ❌',
+        completed: 'confirmed as completed 🎉',
+        missed: 'marked as missed',
+      };
+      sendBrowserNotification('📅 Joint workout updated', {
+        body: `Session status: ${statusLabels[status]}`,
+      });
     }
   };
 

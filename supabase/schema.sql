@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS public.workouts (
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   date DATE NOT NULL DEFAULT CURRENT_DATE,
   title TEXT NOT NULL,
-  category TEXT NOT NULL CHECK (category IN ('Running', 'Weightlifting', 'Cycling', 'Yoga', 'HIIT', 'Walking', 'Swimming', 'Other')),
+  category TEXT NOT NULL CHECK (category IN ('Walking', 'Running', 'Gym', 'Weightlifting', 'Tennis', 'Football', 'Basketball', 'Yoga', 'Cycling', 'Swimming', 'Other')),
   duration_minutes INTEGER NOT NULL CHECK (duration_minutes > 0),
   intensity TEXT NOT NULL CHECK (intensity IN ('Low', 'Medium', 'High', 'Extreme')),
   notes TEXT,
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS public.joint_workout_invites (
   scheduled_at TIMESTAMPTZ NOT NULL,
   activity_type TEXT NOT NULL,
   location_notes TEXT,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined')),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined', 'completed', 'missed')),
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );

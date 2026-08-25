@@ -17,12 +17,15 @@ interface LogWorkoutModalProps {
 }
 
 const CATEGORIES: WorkoutCategory[] = [
-  'Running',
-  'Weightlifting',
-  'Cycling',
-  'Yoga',
-  'HIIT',
   'Walking',
+  'Running',
+  'Gym',
+  'Weightlifting',
+  'Tennis',
+  'Football',
+  'Basketball',
+  'Yoga',
+  'Cycling',
   'Swimming',
   'Other',
 ];

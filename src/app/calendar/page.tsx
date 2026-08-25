@@ -17,7 +17,9 @@ import {
   Dumbbell, 
   ChevronLeft, 
   ChevronRight,
-  Sparkles
+  Sparkles,
+  CheckCircle2,
+  HelpCircle
 } from 'lucide-react';
 import { useAppState } from '@/context/AppStateContext';
 import { 
@@ -171,7 +173,11 @@ export default function CalendarPage() {
                       <div 
                         key={inv.id}
                         className={`flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md truncate ${
-                          inv.status === 'accepted' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-amber-500/20 text-amber-400'
+                          inv.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
+                          inv.status === 'accepted' ? 'bg-cyan-500/20 text-cyan-400' :
+                          inv.status === 'missed' ? 'bg-slate-500/20 text-slate-400' :
+                          inv.status === 'declined' ? 'bg-rose-500/20 text-rose-400' :
+                          'bg-amber-500/20 text-amber-400'
                         }`}
                       >
                         <Users className="w-2.5 h-2.5 shrink-0" />
@@ -201,11 +207,20 @@ export default function CalendarPage() {
             <div className="space-y-3">
               {jointInvites.map(inv => {
                 const isPendingForMe = inv.buddy_id === user?.id && inv.status === 'pending';
+                const isMine = inv.host_id === user?.id || inv.buddy_id === user?.id;
+                const isPastSession = new Date(inv.scheduled_at).getTime() < Date.now();
+                const needsCompletionConfirm = isMine && isPastSession && inv.status === 'accepted';
+
+                const badgeVariant =
+                  inv.status === 'accepted' ? 'cyan' :
+                  inv.status === 'completed' ? 'emerald' :
+                  inv.status === 'declined' ? 'rose' :
+                  inv.status === 'missed' ? 'slate' : 'amber';
 
                 return (
                   <Card key={inv.id} className="space-y-3 p-4">
                     <div className="flex items-center justify-between">
-                      <Badge variant={inv.status === 'accepted' ? 'emerald' : inv.status === 'declined' ? 'rose' : 'amber'}>
+                      <Badge variant={badgeVariant}>
                         {inv.status.toUpperCase()}
                       </Badge>
                       <span className="text-[11px] text-slate-400 font-medium">
@@ -248,6 +263,36 @@ export default function CalendarPage() {
                         >
                           Decline
                         </Button>
+                      </div>
+                    )}
+
+                    {/* Confirm whether a past scheduled session actually happened */}
+                    {needsCompletionConfirm && (
+                      <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                          <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Did this session actually happen?</span>
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => respondToInvite(inv.id, 'completed')}
+                            leftIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
+                          >
+                            Confirm Done
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => respondToInvite(inv.id, 'missed')}
+                            leftIcon={<X className="w-3.5 h-3.5" />}
+                          >
+                            Mark Missed
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </Card>
