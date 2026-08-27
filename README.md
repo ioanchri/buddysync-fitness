@@ -1,6 +1,6 @@
-# ⚡ PulseSync - Fitness & Habit Tracker for Accountability Buddies
+# ⚡ BuddySync - Fitness & Habit Tracker for Accountability Buddies
 
-PulseSync is a responsive, mobile-first web application built with Next.js (App Router), TypeScript, Tailwind CSS, Recharts, and Supabase. It is designed for friends and workout partners to track daily fitness metrics, log workouts, celebrate progress, and schedule joint workout sessions together.
+BuddySync is a responsive, mobile-first web application built with Next.js (App Router), TypeScript, Tailwind CSS, Recharts, and Supabase. It is designed for friends and workout partners to track daily fitness metrics, log workouts, celebrate progress, and schedule joint workout sessions together.
 
 ---
 
@@ -18,7 +18,7 @@ PulseSync is a responsive, mobile-first web application built with Next.js (App 
    - Quick workout logger (Activity category, duration in minutes, intensity: Low/Medium/High/Extreme, notes, photo URL).
 
 3. **Buddy System & Shared Social Feed**:
-   - Invite buddies via unique invite codes (e.g. `PULSE888`).
+   - Invite buddies via unique invite codes (e.g. `ALEX888`).
    - Shared Feed showing connected accountability partner logs and workout entries.
    - Interactive Quick Reactions (🔥, 🙌, 💪, 🎉, ❤️) & custom encouraging comments.
 
@@ -59,7 +59,7 @@ Copy `.env.example` to `.env.local`:
 cp .env.example .env.local
 ```
 
-> **Note on Zero-Config Demo Mode**: If no Supabase credentials are provided, PulseSync automatically runs in **Demo Mode** using browser LocalStorage and pre-populated demo data for immediate testing!
+> **Note on Zero-Config Demo Mode**: If no Supabase credentials are provided, BuddySync automatically runs in **Demo Mode** using browser LocalStorage and pre-populated demo data for immediate testing!
 
 ### 3. Run Development Server
 ```bash

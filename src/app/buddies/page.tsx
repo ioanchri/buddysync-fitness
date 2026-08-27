@@ -286,7 +286,7 @@ export default function BuddiesPage() {
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
         title="Invite Accountability Buddy"
-        subtitle="Connect with a workout partner using their unique PulseSync invite code"
+        subtitle="Connect with a workout partner using their unique BuddySync invite code"
       >
         <form onSubmit={handleSendInvite} className="space-y-4">
           <Input

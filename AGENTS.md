@@ -8,15 +8,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# ⚡ PulseSync (BuddySync) — Agent Knowledge & Architecture Guide
+# ⚡ BuddySync — Agent Knowledge & Architecture Guide
 
-Welcome to **PulseSync** (also branded as **BuddySync**), a modern, responsive, mobile-first accountability and fitness tracking web application. This document is the single source of truth for AI agents working on this codebase.
+Welcome to **BuddySync**, a modern, responsive, mobile-first accountability and fitness tracking web application. This document is the single source of truth for AI agents working on this codebase.
 
 ---
 
 ## 1. Project Overview & Core Mission
 
-PulseSync solves the problem of fitness habit drop-off by combining **individual habit tracking** with **social accountability between workout partners (buddies)**.
+BuddySync solves the problem of fitness habit drop-off by combining **individual habit tracking** with **social accountability between workout partners (buddies)**.
 
 ### Core Value Propositions:
 - **Daily Metric Tracking**: Lightweight, fast logging for daily steps, weight, hydration, and detailed workouts.

@@ -30,7 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenWorkoutModal }) => {
       {onOpenWorkoutModal && (
         <button
           onClick={onOpenWorkoutModal}
-          className="w-full mb-6 py-3 px-4 rounded-2xl pulse-gradient-bg text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer"
+          className="w-full mb-6 py-3 px-4 rounded-2xl buddysync-gradient-bg text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer"
         >
           <PlusCircle className="w-5 h-5" />
           <span>Log New Workout</span>
@@ -75,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenWorkoutModal }) => {
             <span className="text-emerald-500 text-xs font-bold">Target Active</span>
           </div>
           <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-            <div className="h-full pulse-gradient-bg w-[75%] rounded-full transition-all duration-500" />
+            <div className="h-full buddysync-gradient-bg w-[75%] rounded-full transition-all duration-500" />
           </div>
         </div>
       )}

@@ -17,6 +17,14 @@ export const metadata: Metadata = {
   description: 'Track daily weight, step goals, and workouts with your accountability partner. Schedule joint workout sessions, send encouragement, and reach fitness checkpoints together.',
   keywords: ['fitness tracker', 'accountability buddies', 'habit tracking', 'workout planner', 'weight tracking', 'step counter'],
   authors: [{ name: 'BuddySync Team' }],
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon.png', type: 'image/png', sizes: '32x32' },
+    ],
+    apple: [{ url: '/apple-icon.svg', type: 'image/svg+xml' }],
+  },
   openGraph: {
     title: 'BuddySync - Accountability Buddy Fitness Tracker',
     description: 'Track daily metrics, share progress with buddies, and plan joint workouts together.',

@@ -1,5 +1,5 @@
 -- ===================================================
--- PulseSync Fitness & Habit Tracker - Supabase DDL Schema
+-- BuddySync Fitness & Habit Tracker - Supabase DDL Schema
 -- ===================================================
 
 -- 1. Enable UUID extension

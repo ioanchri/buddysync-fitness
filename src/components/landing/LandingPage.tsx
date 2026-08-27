@@ -105,7 +105,7 @@ export const LandingPage: React.FC = () => {
                   <span className="buddysync-glow-text block">Together.</span>
                 </h1>
                 <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl">
-                  <span className="font-extrabold text-slate-900 dark:text-white">PulseSync (BuddySync)</span> combines lightweight daily tracking
+                  <span className="font-extrabold text-slate-900 dark:text-white">BuddySync</span> combines lightweight daily tracking
                   with social accountability. Log steps, weight & workouts — share progress with a buddy, plan joint sessions, and protect your streak.
                 </p>
               </div>
