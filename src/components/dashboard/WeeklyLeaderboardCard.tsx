@@ -83,34 +83,32 @@ export const WeeklyLeaderboardCard: React.FC = () => {
           return (
             <div
               key={item.id}
-              className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
+              className={`flex flex-wrap items-center justify-between gap-2 p-3 rounded-2xl border transition-all ${
                 isCurrentUser
                   ? 'bg-purple-500/10 border-purple-500/40 text-slate-900 dark:text-white font-bold'
                   : 'bg-slate-100/70 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/60 text-slate-700 dark:text-slate-300'
               }`}
             >
-              <div className="flex items-center gap-3">
-                <span className="text-lg font-black">{medal}</span>
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-lg font-black shrink-0">{medal}</span>
                 <img
                   src={item.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150'}
                   alt={item.name}
-                  className="w-8 h-8 rounded-full object-cover ring-2 ring-purple-500/30"
+                  className="w-8 h-8 rounded-full object-cover ring-2 ring-purple-500/30 shrink-0"
                 />
-                <div>
-                  <p className="text-xs font-extrabold text-slate-900 dark:text-white">{item.name}</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs font-extrabold text-slate-900 dark:text-white truncate">{item.name}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                     <span className="flex items-center gap-1">
-                      <Footprints className="w-3 h-3 text-cyan-500" />
+                      <Footprints className="w-3 h-3 text-cyan-500 shrink-0" />
                       {item.steps.toLocaleString()} steps
                     </span>
-                    <span>•</span>
                     <span className="flex items-center gap-1">
-                      <Dumbbell className="w-3 h-3 text-emerald-500" />
+                      <Dumbbell className="w-3 h-3 text-emerald-500 shrink-0" />
                       {item.workouts} this wk
                     </span>
-                    <span>•</span>
                     <span className="flex items-center gap-1">
-                      <Zap className="w-3 h-3 text-amber-500" />
+                      <Zap className="w-3 h-3 text-amber-500 shrink-0" />
                       {item.streak}d streak
                     </span>
                   </p>
@@ -118,11 +116,11 @@ export const WeeklyLeaderboardCard: React.FC = () => {
               </div>
 
               {!isCurrentUser && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0 ml-auto">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-500/10"
+                    className="text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 whitespace-nowrap"
                     onClick={() => handleHighFive(item.id)}
                     leftIcon={sentToId === item.id ? <Check className="w-3 h-3 text-emerald-500" /> : <Send className="w-3 h-3" />}
                   >

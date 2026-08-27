@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS public.workouts (
   intensity TEXT NOT NULL CHECK (intensity IN ('Low', 'Medium', 'High', 'Extreme')),
   notes TEXT,
   photo_url TEXT,
+  steps_added INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

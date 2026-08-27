@@ -19,7 +19,9 @@ import {
   ChevronRight,
   Sparkles,
   CheckCircle2,
-  HelpCircle
+  HelpCircle,
+  Flame,
+  Footprints
 } from 'lucide-react';
 import { useAppState } from '@/context/AppStateContext';
 import { 
@@ -41,6 +43,10 @@ export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isWorkoutDetailOpen, setIsWorkoutDetailOpen] = useState(false);
+  const [selectedDayWorkouts, setSelectedDayWorkouts] = useState<typeof workouts>([]);
+  const [isInviteDetailOpen, setIsInviteDetailOpen] = useState(false);
+  const [selectedInvite, setSelectedInvite] = useState<typeof jointInvites[number] | null>(null);
 
   // Invite modal form fields
   const [selectedBuddyId, setSelectedBuddyId] = useState(buddies[0]?.id || '');
@@ -164,15 +170,29 @@ export default function CalendarPage() {
 
                   <div className="w-full space-y-1 mt-1">
                     {hasLoggedWorkout && (
-                      <div className="flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-500 truncate">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDayWorkouts(workouts.filter(w => w.date === dayStr));
+                          setIsWorkoutDetailOpen(true);
+                        }}
+                        className="flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-500 truncate hover:bg-emerald-500/30 transition-colors w-full text-left cursor-pointer"
+                      >
                         <Dumbbell className="w-2.5 h-2.5 shrink-0" />
                         <span className="truncate">Workout</span>
-                      </div>
+                      </button>
                     )}
                     {jointEvents.map(inv => (
-                      <div 
+                      <button 
                         key={inv.id}
-                        className={`flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md truncate ${
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedInvite(inv);
+                          setIsInviteDetailOpen(true);
+                        }}
+                        className={`flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md truncate hover:opacity-80 transition-opacity w-full text-left cursor-pointer ${
                           inv.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
                           inv.status === 'accepted' ? 'bg-cyan-500/20 text-cyan-400' :
                           inv.status === 'missed' ? 'bg-slate-500/20 text-slate-400' :
@@ -182,7 +202,7 @@ export default function CalendarPage() {
                       >
                         <Users className="w-2.5 h-2.5 shrink-0" />
                         <span className="truncate">{inv.activity_type}</span>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </button>
@@ -382,6 +402,165 @@ export default function CalendarPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Workout Detail Modal */}
+      <Modal
+        isOpen={isWorkoutDetailOpen}
+        onClose={() => setIsWorkoutDetailOpen(false)}
+        title="Workout Details"
+        subtitle={selectedDayWorkouts.length > 0 ? `${selectedDayWorkouts[0].date} — ${selectedDayWorkouts.length} session${selectedDayWorkouts.length > 1 ? 's' : ''}` : ''}
+      >
+        <div className="space-y-4">
+          {selectedDayWorkouts.map(wo => (
+            <div key={wo.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">{wo.title}</h3>
+                <Badge variant="emerald">{wo.category}</Badge>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-cyan-500" />
+                  {wo.duration_minutes} min
+                </span>
+                <span className="flex items-center gap-1">
+                  <Flame className="w-3.5 h-3.5 text-amber-500" />
+                  {wo.intensity}
+                </span>
+                {wo.steps_added && wo.steps_added > 0 && (
+                  <span className="flex items-center gap-1">
+                    <Footprints className="w-3.5 h-3.5 text-emerald-500" />
+                    {wo.steps_added.toLocaleString()} steps
+                  </span>
+                )}
+              </div>
+
+              {wo.notes && (
+                <p className="text-xs text-slate-600 dark:text-slate-400 italic">
+                  &quot;{wo.notes}&quot;
+                </p>
+              )}
+
+              {wo.photo_url && (
+                <img
+                  src={wo.photo_url}
+                  alt={wo.title}
+                  className="w-full h-40 object-cover rounded-xl"
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </Modal>
+
+      {/* Joint Workout Invite Detail Modal */}
+      <Modal
+        isOpen={isInviteDetailOpen}
+        onClose={() => setIsInviteDetailOpen(false)}
+        title="Joint Workout Details"
+        subtitle={selectedInvite ? format(new Date(selectedInvite.scheduled_at), 'EEEE, MMMM d, yyyy • h:mm a') : ''}
+      >
+        {selectedInvite && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">{selectedInvite.activity_type}</h3>
+              <Badge variant={
+                selectedInvite.status === 'accepted' ? 'cyan' :
+                selectedInvite.status === 'completed' ? 'emerald' :
+                selectedInvite.status === 'declined' ? 'rose' :
+                selectedInvite.status === 'missed' ? 'slate' : 'amber'
+              }>
+                {selectedInvite.status.toUpperCase()}
+              </Badge>
+            </div>
+
+            <div className="space-y-2 text-xs text-slate-500 dark:text-slate-400">
+              <p className="flex items-center gap-2">
+                <Users className="w-3.5 h-3.5 text-purple-500" />
+                <span><strong className="text-slate-700 dark:text-slate-300">Host:</strong> {selectedInvite.host_name}</span>
+              </p>
+              <p className="flex items-center gap-2">
+                <Users className="w-3.5 h-3.5 text-cyan-500" />
+                <span><strong className="text-slate-700 dark:text-slate-300">Buddy:</strong> {selectedInvite.buddy_name}</span>
+              </p>
+              <p className="flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-cyan-500" />
+                <span>{format(new Date(selectedInvite.scheduled_at), 'h:mm a')}</span>
+              </p>
+              {selectedInvite.location_notes && (
+                <p className="flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                  <span>{selectedInvite.location_notes}</span>
+                </p>
+              )}
+            </div>
+
+            {selectedInvite.status === 'pending' && selectedInvite.buddy_id === user?.id && (
+              <div className="flex items-center gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    respondToInvite(selectedInvite.id, 'accepted');
+                    setSelectedInvite({ ...selectedInvite, status: 'accepted' });
+                  }}
+                  leftIcon={<Check className="w-3.5 h-3.5" />}
+                >
+                  Accept
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    respondToInvite(selectedInvite.id, 'declined');
+                    setSelectedInvite({ ...selectedInvite, status: 'declined' });
+                  }}
+                  leftIcon={<X className="w-3.5 h-3.5" />}
+                >
+                  Decline
+                </Button>
+              </div>
+            )}
+
+            {selectedInvite.status === 'accepted' && new Date(selectedInvite.scheduled_at).getTime() < Date.now() && (
+              <div className="space-y-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                  <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Did this session actually happen?</span>
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => {
+                      respondToInvite(selectedInvite.id, 'completed');
+                      setSelectedInvite({ ...selectedInvite, status: 'completed' });
+                    }}
+                    leftIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
+                  >
+                    Confirm Done
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => {
+                      respondToInvite(selectedInvite.id, 'missed');
+                      setSelectedInvite({ ...selectedInvite, status: 'missed' });
+                    }}
+                    leftIcon={<X className="w-3.5 h-3.5" />}
+                  >
+                    Mark Missed
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </Modal>
 
     </div>

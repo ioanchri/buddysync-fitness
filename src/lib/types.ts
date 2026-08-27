@@ -52,6 +52,7 @@ export interface Workout {
   intensity: WorkoutIntensity;
   notes?: string;
   photo_url?: string;
+  steps_added?: number;
   created_at?: string;
 }
 

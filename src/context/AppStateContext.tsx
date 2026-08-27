@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { 
   UserProfile, 
   DailyLog, 
@@ -21,6 +21,8 @@ interface AppStateContextType {
   isLoadingUser: boolean;
   theme: 'dark' | 'light';
   toggleTheme: () => void;
+  toast: { id: string; text: string } | null;
+  dismissToast: () => void;
   signUp: (email: string, password: string, fullName: string) => Promise<{ success: boolean; message: string }>;
   login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
@@ -165,6 +167,13 @@ const AppStateContext = createContext<AppStateContextType | undefined>(undefined
 // Shared localStorage keys so demo accounts (Alex/Jordan) can "notify" each other within the same browser.
 const NUDGES_STORAGE_KEY = 'buddysync_nudges';
 const JOINT_INVITES_STORAGE_KEY = 'buddysync_joint_invites';
+const REACTIONS_STORAGE_KEY = 'buddysync_reactions';
+
+interface StoredReactionRecord {
+  itemId: string;
+  recipientId: string;
+  reaction: LogReaction;
+}
 
 export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mounted, setMounted] = useState(false);
@@ -187,6 +196,26 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [jointInvites, setJointInvites] = useState<JointWorkoutInvite[]>([]);
   const [nudges, setNudges] = useState<NudgeNotification[]>([]);
   const [milestones, setMilestones] = useState<MilestoneBadge[]>(generateInitialBadges);
+  const [toast, setToast] = useState<{ id: string; text: string } | null>(null);
+
+  // Track ids already handled so the cross-tab storage listener doesn't re-notify for old/duplicate entries.
+  const userRef = useRef<UserProfile | null>(user);
+  const knownNudgeIdsRef = useRef<Set<string>>(new Set());
+  const knownReactionIdsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  const dismissToast = () => setToast(null);
+
+  const showToast = (text: string) => {
+    const id = `toast-${Date.now()}`;
+    setToast({ id, text });
+    setTimeout(() => {
+      setToast((current) => (current?.id === id ? null : current));
+    }, 3000);
+  };
 
   const isDemoMode = !isSupabaseConfigured;
 
@@ -379,7 +408,19 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const savedNudges = localStorage.getItem(NUDGES_STORAGE_KEY);
     if (savedNudges) {
-      try { setNudges(JSON.parse(savedNudges)); } catch (e) {}
+      try {
+        const parsed: NudgeNotification[] = JSON.parse(savedNudges);
+        setNudges(parsed);
+        parsed.forEach(n => knownNudgeIdsRef.current.add(n.id));
+      } catch (e) {}
+    }
+
+    const savedReactions = localStorage.getItem(REACTIONS_STORAGE_KEY);
+    if (savedReactions) {
+      try {
+        const parsed: StoredReactionRecord[] = JSON.parse(savedReactions);
+        parsed.forEach(r => knownReactionIdsRef.current.add(r.reaction.id));
+      } catch (e) {}
     }
 
     if (!isSupabaseConfigured || !supabase) {
@@ -431,6 +472,54 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => subscription.unsubscribe();
   }, [fetchUserData]);
 
+  // ─── Cross-tab live sync: notifies the receiver in real time if they have another tab/window open ──
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === NUDGES_STORAGE_KEY && e.newValue) {
+        try {
+          const updated: NudgeNotification[] = JSON.parse(e.newValue);
+          setNudges(updated);
+          updated.forEach(n => {
+            if (knownNudgeIdsRef.current.has(n.id)) return;
+            knownNudgeIdsRef.current.add(n.id);
+            const currentUser = userRef.current;
+            if (currentUser && n.buddy_id === currentUser.id && n.sender_id !== currentUser.id) {
+              showToast(n.message);
+              sendBrowserNotification(`📣 ${n.sender_name} sent you a nudge!`, { body: n.message });
+            }
+          });
+        } catch (err) {}
+        return;
+      }
+
+      if (e.key === REACTIONS_STORAGE_KEY && e.newValue) {
+        try {
+          const records: StoredReactionRecord[] = JSON.parse(e.newValue);
+          records.forEach(rec => {
+            if (knownReactionIdsRef.current.has(rec.reaction.id)) return;
+            knownReactionIdsRef.current.add(rec.reaction.id);
+
+            setSharedFeed(prev => prev.map(item =>
+              item.id === rec.itemId && !item.reactions.some(r => r.id === rec.reaction.id)
+                ? { ...item, reactions: [...item.reactions, rec.reaction] }
+                : item
+            ));
+
+            const currentUser = userRef.current;
+            if (currentUser && rec.recipientId === currentUser.id && rec.reaction.sender_id !== currentUser.id) {
+              const text = `${rec.reaction.emoji} ${rec.reaction.sender_name} cheered your progress!`;
+              showToast(text);
+              sendBrowserNotification(text, { body: rec.reaction.message || 'Sent an encouragement reaction.' });
+            }
+          });
+        } catch (err) {}
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   // ─── Demo mode: load per-user data from localStorage ──────────────────────
   useEffect(() => {
     if (!user || !mounted || isSupabaseConfigured) return;
@@ -452,7 +541,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const buddyObj = allUsers.find(u => u.id !== user.id) || DEFAULT_USERS_DATABASE[1];
     setBuddies([buddyObj]);
 
-    setSharedFeed([
+    const seededFeed: SharedFeedItem[] = [
       {
         id: `feed-1`,
         type: 'workout',
@@ -498,7 +587,23 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         },
         reactions: []
       }
-    ]);
+    ];
+
+    // Re-apply any cheers/reactions a buddy already left while this tab wasn't open.
+    const storedReactionsRaw = localStorage.getItem(REACTIONS_STORAGE_KEY);
+    let storedReactions: StoredReactionRecord[] = [];
+    if (storedReactionsRaw) {
+      try { storedReactions = JSON.parse(storedReactionsRaw); } catch (e) {}
+    }
+    storedReactions.forEach(rec => knownReactionIdsRef.current.add(rec.reaction.id));
+
+    setSharedFeed(seededFeed.map(item => {
+      const extra = storedReactions
+        .filter(rec => rec.itemId === item.id)
+        .map(rec => rec.reaction)
+        .filter(reaction => !item.reactions.some(existing => existing.id === reaction.id));
+      return extra.length > 0 ? { ...item, reactions: [...item.reactions, ...extra] } : item;
+    }));
 
     const savedInvites = localStorage.getItem(JOINT_INVITES_STORAGE_KEY);
     if (savedInvites) {
@@ -843,6 +948,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       message: messages[type],
       created_at: new Date().toISOString(),
     };
+    knownNudgeIdsRef.current.add(newNudge.id);
     setNudges(prev => {
       const updated = [newNudge, ...prev];
       // Shared storage key so the buddy sees it once they're the active demo account.
@@ -856,6 +962,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       water: `💧 Hydration reminder sent to ${buddyName}`,
       high_five: `🙌 High Five sent to ${buddyName}`,
     };
+    showToast(confirmationTitles[type]);
     sendBrowserNotification(confirmationTitles[type], { body: newNudge.message });
   };
 
@@ -1052,38 +1159,55 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const addReaction = async (itemId: string, emoji: string, message?: string) => {
     if (!user) return;
 
+    const feedItemForToast = sharedFeed.find(f => f.id === itemId);
+    const newReaction: LogReaction = {
+      id: `r-${Date.now()}`,
+      sender_id: user.id,
+      sender_name: user.full_name,
+      emoji,
+      message,
+      created_at: new Date().toISOString(),
+    };
+    knownReactionIdsRef.current.add(newReaction.id);
+
     // Optimistic UI update
     setSharedFeed(prev => prev.map(item => {
       if (item.id === itemId) {
-        const newReaction: LogReaction = {
-          id: `r-${Date.now()}`,
-          sender_id: user.id,
-          sender_name: user.full_name,
-          emoji,
-          message,
-          created_at: new Date().toISOString(),
-        };
         return { ...item, reactions: [...item.reactions, newReaction] };
       }
       return item;
     }));
 
     if (isSupabaseConfigured && supabase) {
-      const feedItem = sharedFeed.find(f => f.id === itemId);
-      if (feedItem) {
+      if (feedItemForToast) {
         const insertPayload: Record<string, unknown> = {
           sender_id: user.id,
           emoji,
           message: message || null,
         };
-        if (feedItem.type === 'workout' && feedItem.workout) {
-          insertPayload.workout_id = feedItem.workout.id;
-        } else if (feedItem.type === 'daily_log' && feedItem.log) {
-          insertPayload.log_id = feedItem.log.id;
+        if (feedItemForToast.type === 'workout' && feedItemForToast.workout) {
+          insertPayload.workout_id = feedItemForToast.workout.id;
+        } else if (feedItemForToast.type === 'daily_log' && feedItemForToast.log) {
+          insertPayload.log_id = feedItemForToast.log.id;
         }
         await supabase.from('log_reactions').insert(insertPayload);
       }
+    } else if (feedItemForToast) {
+      // Persist so the recipient sees it once they're the active demo account (or live, via another open tab).
+      const stored = localStorage.getItem(REACTIONS_STORAGE_KEY);
+      let records: StoredReactionRecord[] = [];
+      if (stored) {
+        try { records = JSON.parse(stored); } catch (e) {}
+      }
+      records.push({ itemId, recipientId: feedItemForToast.user_id, reaction: newReaction });
+      localStorage.setItem(REACTIONS_STORAGE_KEY, JSON.stringify(records));
     }
+
+    const recipientName = feedItemForToast?.user_name || 'your buddy';
+    showToast(`${emoji} Cheer sent to ${recipientName}!`);
+    sendBrowserNotification(`${emoji} Cheer sent to ${recipientName}!`, {
+      body: message || 'Sent an encouragement reaction.',
+    });
   };
 
   // ─── Joint Workout Invites ────────────────────────────────────────────────
@@ -1144,16 +1268,25 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const respondToInvite = async (inviteId: string, status: 'accepted' | 'declined' | 'completed' | 'missed') => {
-    // Optimistic update
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('joint_workout_invites')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', inviteId);
+
+      if (error) {
+        showToast('Failed to update invite. Please try again.');
+        return;
+      }
+    }
+
     setJointInvites(prev => {
       const updated = prev.map(inv => inv.id === inviteId ? { ...inv, status } : inv);
       if (!isSupabaseConfigured) localStorage.setItem(JOINT_INVITES_STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
 
-    if (isSupabaseConfigured && supabase) {
-      await supabase.from('joint_workout_invites').update({ status, updated_at: new Date().toISOString() }).eq('id', inviteId);
-    } else {
+    if (!isSupabaseConfigured) {
       const statusLabels: Record<typeof status, string> = {
         accepted: 'accepted ✅',
         declined: 'declined ❌',
@@ -1174,6 +1307,9 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setDailyLogs(generateDeterministicLogs(DEFAULT_USERS_DATABASE[0].id));
     setWorkouts(generateDeterministicWorkouts(DEFAULT_USERS_DATABASE[0].id));
     setBuddies([DEFAULT_USERS_DATABASE[1]]);
+    setJointInvites([]);
+    setSharedFeed([]);
+    setNudges([]);
   };
 
   return (
@@ -1183,6 +1319,8 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       isLoadingUser,
       theme,
       toggleTheme,
+      toast,
+      dismissToast,
       signUp,
       login,
       logout,

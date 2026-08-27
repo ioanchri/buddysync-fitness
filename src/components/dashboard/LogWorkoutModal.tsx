@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Dumbbell, Clock, Flame, Image as ImageIcon, MessageSquare } from 'lucide-react';
+import { Dumbbell, Clock, Flame, Image as ImageIcon, MessageSquare, Footprints } from 'lucide-react';
 import { Workout, WorkoutCategory, WorkoutIntensity } from '@/lib/types';
 import { useAppState } from '@/context/AppStateContext';
 import { format } from 'date-fns';
@@ -33,7 +33,7 @@ const CATEGORIES: WorkoutCategory[] = [
 const INTENSITIES: WorkoutIntensity[] = ['Low', 'Medium', 'High', 'Extreme'];
 
 export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClose, workoutToEdit }) => {
-  const { addWorkout, updateWorkout } = useAppState();
+  const { addWorkout, updateWorkout, dailyLogs, logDailyMetrics } = useAppState();
 
   const [title, setTitle] = useState('');
   const [loggedDate, setLoggedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -42,6 +42,9 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClos
   const [intensity, setIntensity] = useState<WorkoutIntensity>('High');
   const [notes, setNotes] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
+  const [stepsAdded, setStepsAdded] = useState(0);
+
+  const isWalkingOrRunning = category === 'Walking' || category === 'Running';
 
   const isEditing = Boolean(workoutToEdit);
 
@@ -54,6 +57,7 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClos
       setIntensity(workoutToEdit.intensity || 'High');
       setNotes(workoutToEdit.notes || '');
       setPhotoUrl(workoutToEdit.photo_url || '');
+      setStepsAdded(workoutToEdit.steps_added || 0);
       return;
     }
 
@@ -65,6 +69,7 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClos
       setIntensity('High');
       setNotes('');
       setPhotoUrl('');
+      setStepsAdded(0);
     }
   }, [isOpen, workoutToEdit]);
 
@@ -80,6 +85,7 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClos
       intensity,
       notes: notes.trim() || undefined,
       photo_url: photoUrl.trim() || undefined,
+      ...(isWalkingOrRunning && stepsAdded > 0 ? { steps_added: stepsAdded } : {}),
     };
 
     if (isEditing && workoutToEdit) {
@@ -93,6 +99,12 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClos
           origin: { y: 0.7 },
         });
       } catch (e) {}
+
+      if (isWalkingOrRunning && stepsAdded > 0) {
+        const existingLog = dailyLogs.find(l => l.date === loggedDate);
+        const currentSteps = existingLog?.steps ?? 0;
+        logDailyMetrics({ steps: currentSteps + stepsAdded, logDate: loggedDate });
+      }
     }
 
     setTitle('');
@@ -166,6 +178,27 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClos
           </div>
 
         </div>
+
+        {/* Steps (Walking/Running only) */}
+        {isWalkingOrRunning && (
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+              <Footprints className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Steps from this workout (optional)</span>
+            </label>
+            <Input
+              type="number"
+              min="0"
+              max="100000"
+              value={stepsAdded}
+              onChange={(e) => setStepsAdded(Number(e.target.value))}
+              placeholder="e.g. 5000"
+            />
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+              These steps will be added to your daily step count.
+            </p>
+          </div>
+        )}
 
         {/* Intensity Selector */}
         <div>
