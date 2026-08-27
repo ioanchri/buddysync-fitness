@@ -106,7 +106,7 @@ export default function CalendarPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Calendar Section (2 Cols) */}
-        <Card glow="purple" className="lg:col-span-2 space-y-4">
+        <Card data-tour="calendar-grid" glow="purple" className="lg:col-span-2 space-y-4">
           
           {/* Month Header Controls */}
           <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
@@ -213,7 +213,7 @@ export default function CalendarPage() {
         </Card>
 
         {/* Joint Workout Invites Column (1 Col) */}
-        <div className="space-y-4">
+        <div data-tour="calendar-invites" className="space-y-4">
           <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <Users className="w-5 h-5 text-purple-500" />
             <span>Joint Workout Invites</span>

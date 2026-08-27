@@ -68,7 +68,7 @@ export default function DashboardPage() {
     <div className="space-y-6 pb-12">
       
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl buddysync-gradient-bg p-6 text-white shadow-xl shadow-emerald-500/20">
+      <div data-tour="dashboard-welcome" className="relative overflow-hidden rounded-3xl buddysync-gradient-bg p-6 text-white shadow-xl shadow-emerald-500/20">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-emerald-100 mb-1">
@@ -98,13 +98,15 @@ export default function DashboardPage() {
       </div>
 
       {/* Daily Input Form */}
-      <DailyMetricForm onOpenWorkoutModal={() => setIsWorkoutModalOpen(true)} />
+      <div data-tour="dashboard-metrics">
+        <DailyMetricForm onOpenWorkoutModal={() => setIsWorkoutModalOpen(true)} />
+      </div>
 
       {/* Visual Analytics & Goal Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* Step Ring Progress Card */}
-        <Card className="flex flex-col items-center justify-center text-center p-6" glow="cyan">
+        <Card data-tour="dashboard-steps" className="flex flex-col items-center justify-center text-center p-6" glow="cyan">
           <div className="w-full flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Daily Step Goal
@@ -131,16 +133,18 @@ export default function DashboardPage() {
         </Card>
 
         {/* Weight Loss / Target Metric Card */}
-        <MetricCard
-          title={`Target Weight Progress (${unit})`}
-          currentValue={currentWeight}
-          targetValue={targetWeight}
-          unit={unit}
-          progressPercent={weightProgressPercent}
-          icon={<Scale className="w-6 h-6" />}
-          accentColor="emerald"
-          subtitle={`Started at ${initialWeight} ${unit} • ${(initialWeight - currentWeight).toFixed(1)} ${unit} change`}
-        />
+        <div data-tour="dashboard-weight">
+          <MetricCard
+            title={`Target Weight Progress (${unit})`}
+            currentValue={currentWeight}
+            targetValue={targetWeight}
+            unit={unit}
+            progressPercent={weightProgressPercent}
+            icon={<Scale className="w-6 h-6" />}
+            accentColor="emerald"
+            subtitle={`Started at ${initialWeight} ${unit} • ${(initialWeight - currentWeight).toFixed(1)} ${unit} change`}
+          />
+        </div>
 
         {/* Weekly Checkpoint Metric Card */}
         <MetricCard
@@ -157,10 +161,12 @@ export default function DashboardPage() {
       </div>
 
       {/* Streak Protection Feature */}
-      <StreakShieldCard />
+      <div data-tour="dashboard-streak">
+        <StreakShieldCard />
+      </div>
 
       {/* Lower Section: Weekly Leaderboard & Recent Workouts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div data-tour="dashboard-feed" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Workouts History List (2 cols) */}
         <div className="lg:col-span-2 space-y-4">

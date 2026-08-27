@@ -69,7 +69,7 @@ export default function ProgressPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Weight Loss Trajectory Line Chart */}
-        <Card glow="emerald" className="space-y-4">
+        <Card data-tour="progress-weight" glow="emerald" className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Scale className="w-5 h-5 text-emerald-500" />
@@ -109,7 +109,7 @@ export default function ProgressPage() {
         </Card>
 
         {/* Daily Step Trends Bar Chart */}
-        <Card glow="cyan" className="space-y-4">
+        <Card data-tour="progress-steps" glow="cyan" className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Footprints className="w-5 h-5 text-cyan-500" />
@@ -143,8 +143,8 @@ export default function ProgressPage() {
 
       </div>
 
-      {/* Milestone Checkpoint Badges Grid */}
-      <div className="space-y-4 pt-4">
+        {/* Milestone Checkpoint Badges Grid */}
+        <div data-tour="progress-badges" className="space-y-4 pt-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <Award className="w-5 h-5 text-amber-500" />

@@ -7,10 +7,12 @@ import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { LogWorkoutModal } from '@/components/dashboard/LogWorkoutModal';
+import { LandingPage } from '@/components/landing/LandingPage';
+import { JoyrideTour } from '@/components/onboarding/JoyrideTour';
 import { AppStateProvider, useAppState } from '@/context/AppStateContext';
 
 const AppShellInner: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isLoadingUser, toast, dismissToast } = useAppState();
+  const { user, isLoadingUser, toast, dismissToast } = useAppState();
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
 
   if (isLoadingUser) {
@@ -19,6 +21,35 @@ const AppShellInner: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         <div className="w-14 h-14 rounded-3xl buddysync-gradient-bg flex items-center justify-center shadow-xl shadow-emerald-500/25">
           <Activity className="w-8 h-8 text-white animate-pulse" />
         </div>
+      </div>
+    );
+  }
+
+  // ── Guest Landing Guard ──────────────────────────────────────────
+  // Non-logged-in visitors see the introduction page with demo-data previews
+  // and a persistent login banner. Logged-in users never see it.
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[var(--bg-main)] text-[var(--text-primary)] transition-colors duration-200">
+        <Header />
+        <main className="flex-1">
+          <LandingPage />
+        </main>
+        {toast && (
+          <div className="fixed bottom-6 right-4 left-4 sm:left-auto z-[60] flex justify-end">
+            <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-slate-900 dark:bg-slate-800 text-white shadow-2xl border border-slate-700 max-w-sm">
+              <Bell className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span className="text-xs font-semibold flex-1">{toast.text}</span>
+              <button
+                onClick={dismissToast}
+                aria-label="Dismiss notification"
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -43,6 +74,9 @@ const AppShellInner: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
       {/* Mobile Bottom Navigation */}
       <BottomNav />
+
+      {/* Joyride Onboarding Tour — responsive, flexible steps via tourSteps.tsx */}
+      <JoyrideTour />
 
       {/* Global Workout Logger Modal */}
       <LogWorkoutModal
@@ -73,8 +107,9 @@ const AppShellInner: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
   const isAuthRoute = pathname === '/auth';
+  const isWelcomeRoute = pathname === '/welcome';
 
-  if (isAuthRoute) {
+  if (isAuthRoute || isWelcomeRoute) {
     return <AppStateProvider>{children}</AppStateProvider>;
   }
 

@@ -24,7 +24,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenWorkoutModal }) => {
   ];
 
   return (
-    <aside className="hidden md:flex flex-col w-64 border-r border-slate-200 dark:border-slate-800 min-h-[calc(100vh-4rem)] p-4 bg-[var(--bg-card)] shrink-0 transition-colors duration-200">
+    <aside data-tour="sidebar-nav" className="hidden md:flex flex-col w-64 border-r border-slate-200 dark:border-slate-800 min-h-[calc(100vh-4rem)] p-4 bg-[var(--bg-card)] shrink-0 transition-colors duration-200">
       
       {/* Quick Action Button */}
       {onOpenWorkoutModal && (

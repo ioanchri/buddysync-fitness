@@ -77,6 +77,7 @@ export default function BuddiesPage() {
         </div>
 
         <Button
+          data-tour="buddies-invite"
           variant="primary"
           onClick={() => setIsInviteModalOpen(true)}
           leftIcon={<UserPlus className="w-4 h-4" />}
@@ -86,7 +87,7 @@ export default function BuddiesPage() {
       </div>
 
       {/* Connected Squad Members bar */}
-      <Card className="flex flex-wrap items-center justify-between gap-4 p-4">
+      <Card data-tour="buddies-squad" className="flex flex-wrap items-center justify-between gap-4 p-4">
         <div className="flex items-center gap-3">
           <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Connected Squad ({buddies.length}):</span>
           <div className="flex items-center -space-x-2">
@@ -129,7 +130,7 @@ export default function BuddiesPage() {
       </Card>
 
       {/* Shared Feed Items */}
-      <div className="space-y-6 max-w-3xl mx-auto">
+      <div data-tour="buddies-feed" className="space-y-6 max-w-3xl mx-auto">
         <h2 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-amber-500" />
           <span>Activity Stream</span>

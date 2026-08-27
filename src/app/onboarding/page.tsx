@@ -20,10 +20,15 @@ import {
   RotateCcw, 
   ShieldCheck, 
   Sparkles,
-  Database
+  Database,
+  GraduationCap,
+  Play,
+  Compass
 } from 'lucide-react';
 import { useAppState } from '@/context/AppStateContext';
 import { WeightUnit } from '@/lib/types';
+import { startTour } from '@/components/onboarding/JoyrideTour';
+import { TOUR_STORAGE_KEY } from '@/components/onboarding/tourSteps';
 
 const avatarSeeds = ['Mimi', 'Sasha', 'Lilly', 'Tigger', 'Bella', 'Zoe', 'Kitty', 'Nova', 'Cleo', 'Milo', 'Sage', 'Iris'] as const;
 
@@ -47,6 +52,23 @@ export default function OnboardingPage() {
 
   const [copiedCode, setCopiedCode] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
+  const [tourCompleted, setTourCompleted] = useState(false);
+
+  React.useEffect(() => {
+    try {
+      setTourCompleted(localStorage.getItem(TOUR_STORAGE_KEY) === 'true');
+    } catch {}
+    const handler = () => {
+      try { setTourCompleted(localStorage.getItem(TOUR_STORAGE_KEY) === 'true'); } catch {}
+    };
+    window.addEventListener('storage', handler);
+    // also listen custom finish event
+    window.addEventListener('buddysync:tour-finished', handler as EventListener);
+    return () => {
+      window.removeEventListener('storage', handler);
+      window.removeEventListener('buddysync:tour-finished', handler as EventListener);
+    };
+  }, []);
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +121,7 @@ export default function OnboardingPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* Left 2 Cols - Main Settings Form */}
-        <div className="md:col-span-2 space-y-6">
+        <div data-tour="onboarding-profile" className="md:col-span-2 space-y-6">
           <Card>
             <form key={user?.id ?? 'profile'} onSubmit={handleSaveProfile} className="space-y-5">
               
@@ -320,7 +342,7 @@ export default function OnboardingPage() {
           </Card>
 
           {/* Invite Code Card */}
-          <Card glow="emerald">
+          <Card data-tour="onboarding-code" glow="emerald">
             <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
               Your Accountability Code
             </h3>
@@ -340,6 +362,49 @@ export default function OnboardingPage() {
               >
                 {copiedCode ? 'Copied!' : 'Copy'}
               </Button>
+            </div>
+          </Card>
+
+          {/* Onboarding Tour Card — triggers Joyride */}
+          <Card glow="cyan" data-tour="onboarding-tour-card" className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl buddysync-gradient-bg flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+                <GraduationCap className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Onboarding</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Interactive guided tour with arrows & steps</p>
+              </div>
+            </div>
+            <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+              New here? Take a 60-second walkthrough of every section — Dashboard, Buddies, Calendar, Progress & more — with spotlight arrows and Next / Back controls. Responsive on mobile.
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                className="flex-1"
+                onClick={() => startTour(0)}
+                leftIcon={<Play className="w-3.5 h-3.5" />}
+                rightIcon={<Compass className="w-3.5 h-3.5" />}
+              >
+                {tourCompleted ? 'Replay Tour' : 'Start Interactive Tour'}
+              </Button>
+            </div>
+            <div className="flex items-center justify-between text-[11px]">
+              <span className={`font-bold ${tourCompleted ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>
+                {tourCompleted ? '✓ Completed — replay anytime' : 'Not completed yet'}
+              </span>
+              {tourCompleted && (
+                <button
+                  onClick={() => {
+                    try { localStorage.removeItem(TOUR_STORAGE_KEY); setTourCompleted(false); } catch {}
+                  }}
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline cursor-pointer"
+                >
+                  Reset
+                </button>
+              )}
             </div>
           </Card>
 
