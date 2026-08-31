@@ -25,22 +25,16 @@ export const DailyMetricForm: React.FC<DailyMetricFormProps> = ({ onOpenWorkoutM
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
-    if (selectedLog) {
-      if (selectedLog.weight !== undefined) {
-        setWeight(selectedLog.weight.toString());
-      } else if (user) {
-        setWeight(user.initial_weight.toString());
-      }
-
-      if (selectedLog.steps !== undefined) {
-        setSteps(selectedLog.steps.toString());
-      } else {
-        setSteps('');
-      }
-    } else if (user) {
-      setWeight(user.initial_weight.toString());
-      setSteps('');
-    }
+    setWeight(
+      typeof selectedLog?.weight === 'number' && Number.isFinite(selectedLog.weight)
+        ? selectedLog.weight.toString()
+        : ''
+    );
+    setSteps(
+      typeof selectedLog?.steps === 'number' && Number.isFinite(selectedLog.steps)
+        ? selectedLog.steps.toString()
+        : ''
+    );
   }, [selectedLog, user]);
 
   const parsedSteps = Number.parseInt(steps, 10);
@@ -48,9 +42,9 @@ export const DailyMetricForm: React.FC<DailyMetricFormProps> = ({ onOpenWorkoutM
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const parsedWeight = weight ? parseFloat(weight) : undefined;
+    const parsedWeight = Number(weight);
     logDailyMetrics({
-      weight: parsedWeight,
+      weight: weight.trim() !== '' && Number.isFinite(parsedWeight) ? parsedWeight : undefined,
       steps: safeSteps,
       logDate: selectedDate,
     });
@@ -127,12 +121,12 @@ export const DailyMetricForm: React.FC<DailyMetricFormProps> = ({ onOpenWorkoutM
           {/* Weight Input */}
           <div className="space-y-1">
             <label className="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
-              Weight ({user?.weight_unit || 'kg'})
+              Weight ({user?.weight_unit || 'kg'}) (Optional)
             </label>
             <Input
               type="number"
               step="0.1"
-              placeholder={`e.g. ${user?.initial_weight || 75.0}`}
+              placeholder="Optional"
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
               leftIcon={<Scale className="w-4 h-4 text-emerald-500" />}

@@ -36,7 +36,7 @@ export interface DailyLog {
   id: string;
   user_id: string;
   date: string; // YYYY-MM-DD
-  weight?: number;
+  weight?: number | null;
   steps: number;
   water_ml: number;
   created_at?: string;

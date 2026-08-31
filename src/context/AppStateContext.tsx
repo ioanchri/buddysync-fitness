@@ -821,9 +821,9 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           id: `log-${Date.now()}`,
           user_id: user.id,
           date: targetDate,
-          weight: weight ?? user.initial_weight,
           steps,
           water_ml: 0,
+          ...(weight !== undefined ? { weight } : {}),
         };
         updatedLogs = [newLog, ...prev];
       }
