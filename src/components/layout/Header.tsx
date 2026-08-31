@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Activity, Sun, Moon, Settings, LogOut, User, Bell, CalendarClock, Zap, CheckCircle2 } from 'lucide-react';
 import { useAppState } from '@/context/AppStateContext';
+import { APP_VERSION } from '@/lib/appVersion';
 
 export const Header: React.FC = () => {
   const router = useRouter();
@@ -109,7 +110,12 @@ export const Header: React.FC = () => {
             <Activity className="w-6 h-6 text-white" />
           </div>
           <div>
-            <span className="text-xl font-extrabold tracking-tight buddysync-glow-text">BuddySync</span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl font-extrabold tracking-tight buddysync-glow-text">BuddySync</span>
+              <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500" title={`App version ${APP_VERSION}`}>
+                v{APP_VERSION}
+              </span>
+            </div>
           </div>
         </Link>
 
