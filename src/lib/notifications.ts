@@ -19,7 +19,7 @@ export const sendBrowserNotification = (title: string, options?: NotificationOpt
   if (!isNotificationSupported()) return;
   if (Notification.permission === 'granted') {
     new Notification(title, {
-      icon: '/favicon.ico',
+      icon: '/icon-192.png',
       badge: '/favicon.ico',
       ...options,
     });

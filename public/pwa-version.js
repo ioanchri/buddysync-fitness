@@ -1,0 +1,1 @@
+const BUDDYSYNC_BUILD_VERSION = '0.2.0';

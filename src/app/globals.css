@@ -43,6 +43,13 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 /* Glassmorphism & Custom Card Styles */
 .glass-card {
   background-color: var(--bg-card) !important;

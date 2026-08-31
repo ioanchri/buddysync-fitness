@@ -35,7 +35,7 @@ BuddySync is a responsive, mobile-first web application built with Next.js (App 
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS v4 & custom glassmorphism design tokens
 - **Icons**: Lucide React
@@ -93,3 +93,28 @@ To connect your own production Supabase PostgreSQL instance:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 4. Click **Deploy**. Vercel will automatically build and publish your Next.js App Router application!
+
+---
+
+## Android PWA Release
+
+BuddySync can be installed directly from Chrome on Android. Deploy it to a stable HTTPS domain, open the site in Chrome on the device, then choose **Install app** from the browser menu.
+
+Before each release:
+
+1. Update the `version` in `package.json` using semantic versioning. The build generates a matching service-worker version, cache namespace, and user-visible app version.
+2. Run `npm run build`.
+3. Deploy the production build.
+4. Open the installed app and verify the version beside the BuddySync logo.
+5. When an update banner appears, select **Update** to activate the new cached release.
+
+The service worker caches static app assets and offers an offline fallback for already visited routes. Supabase requests stay network-only, so authenticated data is not shared from a stale cache.
+
+### Android Smoke Test
+
+1. Open the deployed HTTPS URL in Android Chrome.
+2. Confirm the install prompt shows the BuddySync icon.
+3. Install the app and verify its launcher icon and the displayed version.
+4. Open Dashboard, Buddies, Calendar, Progress, and Profile.
+5. Load the app online, disable the network, and confirm an already visited route still opens.
+6. Re-enable the network, confirm data refreshes, then deploy a version increment and verify the in-app update banner.

@@ -1,5 +1,7 @@
-const CACHE_NAME = 'buddysync-shell-v1';
-const APP_SHELL = ['/', '/manifest.webmanifest', '/icon.svg'];
+importScripts('/pwa-version.js');
+
+const CACHE_NAME = `buddysync-shell-${BUDDYSYNC_BUILD_VERSION}`;
+const APP_SHELL = ['/', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
