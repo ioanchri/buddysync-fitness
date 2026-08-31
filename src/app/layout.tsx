@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AppShell } from '@/components/layout/AppShell';
+import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,7 +24,6 @@ export const metadata: Metadata = {
       { url: '/icon.svg', type: 'image/svg+xml' },
       { url: '/icon.png', type: 'image/png', sizes: '32x32' },
     ],
-    apple: [{ url: '/apple-icon.svg', type: 'image/svg+xml' }],
   },
   openGraph: {
     title: 'BuddySync - Accountability Buddy Fitness Tracker',
@@ -48,6 +48,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} min-h-screen antialiased selection:bg-emerald-500 selection:text-white`}>
+        <ServiceWorkerRegistration />
         <AppShell>{children}</AppShell>
       </body>
     </html>
