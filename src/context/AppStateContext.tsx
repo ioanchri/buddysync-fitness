@@ -642,6 +642,9 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     if (mounted) {
       document.documentElement.classList.toggle('dark', theme === 'dark');
+      document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute('content', theme === 'dark' ? '#0b0f19' : '#f8fafc');
     }
   }, [theme, mounted]);
 

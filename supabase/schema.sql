@@ -88,6 +88,29 @@ CREATE TABLE IF NOT EXISTS public.joint_workout_invites (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- 8. Web Push subscriptions, one record per signed-in browser or device.
+CREATE TABLE IF NOT EXISTS public.push_subscriptions (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  endpoint TEXT UNIQUE NOT NULL,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  timezone TEXT NOT NULL DEFAULT 'UTC',
+  reminder_hour SMALLINT NOT NULL DEFAULT 20 CHECK (reminder_hour BETWEEN 0 AND 23),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Idempotency record: a subscription receives at most one daily log reminder per local day.
+CREATE TABLE IF NOT EXISTS public.push_deliveries (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  subscription_id UUID REFERENCES public.push_subscriptions(id) ON DELETE CASCADE NOT NULL,
+  notification_type TEXT NOT NULL,
+  reminder_date DATE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(subscription_id, notification_type, reminder_date)
+);
+
 -- ===================================================
 -- INDEXES FOR PERFORMANCE
 -- ===================================================
@@ -95,6 +118,7 @@ CREATE INDEX IF NOT EXISTS idx_daily_logs_user_date ON public.daily_logs(user_id
 CREATE INDEX IF NOT EXISTS idx_workouts_user_date ON public.workouts(user_id, date DESC);
 CREATE INDEX IF NOT EXISTS idx_buddies_users ON public.buddies(requester_id, addressee_id);
 CREATE INDEX IF NOT EXISTS idx_joint_invites_buddy ON public.joint_workout_invites(buddy_id, scheduled_at);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_reminders ON public.push_subscriptions(reminder_hour, timezone);
 
 -- ===================================================
 -- AUTOMATIC PROFILE CREATION TRIGGER
@@ -126,6 +150,8 @@ ALTER TABLE public.workouts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.buddies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.log_reactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.joint_workout_invites ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.push_deliveries ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: Users can view all profiles (for buddy invites) and update their own profile
 CREATE POLICY "Public profiles read" ON public.profiles FOR SELECT USING (true);
@@ -192,3 +218,15 @@ CREATE POLICY "Create workout invite" ON public.joint_workout_invites
 
 CREATE POLICY "Update workout invite" ON public.joint_workout_invites
   FOR UPDATE USING (auth.uid() = host_id OR auth.uid() = buddy_id);
+
+CREATE POLICY "Users manage own push subscriptions" ON public.push_subscriptions
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users view own push deliveries" ON public.push_deliveries
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.push_subscriptions
+      WHERE push_subscriptions.id = push_deliveries.subscription_id
+      AND push_subscriptions.user_id = auth.uid()
+    )
+  );

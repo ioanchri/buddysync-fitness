@@ -3,13 +3,13 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Activity, Sun, Moon, Settings, LogOut, User, Bell, CalendarClock, Zap, CheckCircle2 } from 'lucide-react';
+import { Activity, Settings, LogOut, User, Bell, CalendarClock, Zap, CheckCircle2 } from 'lucide-react';
 import { useAppState } from '@/context/AppStateContext';
 import { APP_VERSION } from '@/lib/appVersion';
 
 export const Header: React.FC = () => {
   const router = useRouter();
-  const { user, theme, toggleTheme, logout, jointInvites, nudges } = useAppState();
+  const { user, logout, jointInvites, nudges } = useAppState();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>([]);
 
@@ -169,20 +169,6 @@ export const Header: React.FC = () => {
               )}
             </div>
           )}
-
-          {/* Dark / Light Mode Toggle */}
-          <button
-            onClick={toggleTheme}
-            aria-label="Toggle Theme"
-            className="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            {theme === 'dark' ? (
-              <Sun className="w-5 h-5 text-amber-400" />
-            ) : (
-              <Moon className="w-5 h-5 text-slate-700" />
-            )}
-          </button>
 
           {/* User Account Controls */}
           {user ? (

@@ -118,3 +118,19 @@ The service worker caches static app assets and offers an offline fallback for a
 4. Open Dashboard, Buddies, Calendar, Progress, and Profile.
 5. Load the app online, disable the network, and confirm an already visited route still opens.
 6. Re-enable the network, confirm data refreshes, then deploy a version increment and verify the in-app update banner.
+
+---
+
+## Web Push Daily Log Reminders
+
+Installed Android PWAs can receive a daily reminder at 8:00 PM in the device's local time zone when no daily log exists. This requires live Supabase mode; demo mode has no server to deliver background notifications.
+
+1. Run the updated `supabase/schema.sql` in the Supabase SQL Editor.
+2. Generate VAPID keys with `npx web-push generate-vapid-keys --json`.
+3. Set the public key as `NEXT_PUBLIC_VAPID_PUBLIC_KEY` in Vercel and `.env.local`.
+4. Set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (for example `mailto:you@example.com`), and a random `PUSH_CRON_SECRET` as Supabase Edge Function secrets.
+5. Deploy `supabase/functions/send-log-reminders` with JWT verification disabled. The function authenticates scheduled requests using `x-cron-secret` instead.
+6. Configure Supabase Cron to call the function once per hour with that secret. The function selects each device only during its configured local 8 PM hour and records deliveries to prevent duplicates.
+7. In BuddySync Profile & Goal Settings, select **Enable Daily Reminders** and accept the Android notification permission.
+
+Never expose `VAPID_PRIVATE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, or `PUSH_CRON_SECRET` in browser variables or source control.

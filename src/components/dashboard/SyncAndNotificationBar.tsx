@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -8,51 +8,53 @@ import { HealthSyncModal } from '@/components/dashboard/HealthSyncModal';
 import { 
   Bell, 
   BellCheck, 
-  RefreshCw, 
   Smartphone, 
   Apple, 
   Check 
 } from 'lucide-react';
-import { 
-  isNotificationSupported, 
-  getNotificationPermission, 
-  requestNotificationPermission, 
-  sendBrowserNotification 
-} from '@/lib/notifications';
+import {
+  hasPushSubscription,
+  isWebPushConfigured,
+  isWebPushSupported,
+  subscribeToPushNotifications,
+  unsubscribeFromPushNotifications,
+} from '@/lib/pushNotifications';
 import { useAppState } from '@/context/AppStateContext';
 
 export const SyncAndNotificationBar: React.FC = () => {
-  const { user, buddies } = useAppState();
+  const { user } = useAppState();
 
-  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushMessage, setPushMessage] = useState<string | null>(null);
   const [isHealthModalOpen, setIsHealthModalOpen] = useState(false);
-  const [testSentNotice, setTestSentNotice] = useState(false);
 
   useEffect(() => {
-    if (isNotificationSupported()) {
-      setPermission(getNotificationPermission());
-    }
+    void hasPushSubscription().then(setPushEnabled);
   }, []);
 
   const handleEnableNotifications = async () => {
-    const res = await requestNotificationPermission();
-    setPermission(res);
+    if (!user) return;
+    setPushMessage(null);
 
-    if (res === 'granted') {
-      sendBrowserNotification('⚡ BuddySync Notifications Active!', {
-        body: `You'll now receive instant alerts when ${buddies[0]?.full_name || 'your buddy'} completes a workout or invites you!`,
-      });
-      setTestSentNotice(true);
-      setTimeout(() => setTestSentNotice(false), 3000);
+    try {
+      await subscribeToPushNotifications(user.id);
+      setPushEnabled(true);
+      setPushMessage('Daily log reminders are enabled for 8:00 PM.');
+    } catch (error) {
+      setPushMessage(error instanceof Error ? error.message : 'Unable to enable notifications.');
     }
   };
 
-  const handleTestNotification = () => {
-    sendBrowserNotification('🔥 Workout Buddy Alert!', {
-      body: `${buddies[0]?.full_name || 'Jordan'} just completed a 5K Run & sent a High-Five! 🙌`,
-    });
-    setTestSentNotice(true);
-    setTimeout(() => setTestSentNotice(false), 3000);
+  const handleDisableNotifications = async () => {
+    setPushMessage(null);
+
+    try {
+      await unsubscribeFromPushNotifications();
+      setPushEnabled(false);
+      setPushMessage('Daily log reminders are disabled on this device.');
+    } catch (error) {
+      setPushMessage(error instanceof Error ? error.message : 'Unable to disable notifications.');
+    }
   };
 
   return (
@@ -67,35 +69,37 @@ export const SyncAndNotificationBar: React.FC = () => {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Push Notifications</h3>
-              <Badge variant={permission === 'granted' ? 'emerald' : 'slate'}>
-                {permission === 'granted' ? 'Enabled 🔔' : 'Disabled'}
+              <Badge variant={pushEnabled ? 'emerald' : 'slate'}>
+                {pushEnabled ? 'Enabled' : 'Disabled'}
               </Badge>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Get real-time buddy workout alerts & reminders</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Daily reminders are sent at 8:00 PM in your time zone.</p>
+            {pushMessage && <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">{pushMessage}</p>}
           </div>
         </div>
 
         {/* HealthKit & Push Action Buttons */}
         <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-          {permission !== 'granted' ? (
+          {!pushEnabled ? (
             <Button
               variant="primary"
               size="sm"
               onClick={handleEnableNotifications}
               leftIcon={<BellCheck className="w-3.5 h-3.5" />}
               className="w-full sm:w-auto"
+              disabled={!user || !isWebPushConfigured() || !isWebPushSupported()}
             >
-              Enable Browser Push Alerts
+              Enable Daily Reminders
             </Button>
           ) : (
             <Button
               variant="outline"
               size="sm"
-              onClick={handleTestNotification}
-              leftIcon={testSentNotice ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Bell className="w-3.5 h-3.5 text-purple-500" />}
+              onClick={handleDisableNotifications}
+              leftIcon={<Check className="w-3.5 h-3.5 text-emerald-500" />}
               className="w-full sm:w-auto"
             >
-              {testSentNotice ? 'Alert Sent!' : 'Test Notification'}
+              Reminders Enabled
             </Button>
           )}
 
