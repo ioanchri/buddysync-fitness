@@ -205,6 +205,9 @@ CREATE POLICY "Create buddy connection" ON public.buddies
 CREATE POLICY "Update buddy connection" ON public.buddies
   FOR UPDATE USING (auth.uid() = requester_id OR auth.uid() = addressee_id);
 
+CREATE POLICY "Delete buddy connection" ON public.buddies
+  FOR DELETE USING (auth.uid() = requester_id OR auth.uid() = addressee_id);
+
 -- Reactions & Quick Cheers: View reactions on logs/workouts accessible to user
 CREATE POLICY "View reactions" ON public.log_reactions FOR SELECT USING (true);
 CREATE POLICY "Insert reactions" ON public.log_reactions FOR INSERT WITH CHECK (auth.uid() = sender_id);

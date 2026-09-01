@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { 
@@ -15,6 +15,8 @@ import {
   Lock 
 } from 'lucide-react';
 import { useAppState } from '@/context/AppStateContext';
+import { DailyMetricForm } from '@/components/dashboard/DailyMetricForm';
+import { LogWorkoutModal } from '@/components/dashboard/LogWorkoutModal';
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -30,6 +32,7 @@ import {
 
 export default function ProgressPage() {
   const { user, dailyLogs, milestones } = useAppState();
+  const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
 
   // Reverse logs so oldest is left, newest is right
   const chartData = [...dailyLogs].reverse().map(l => ({
@@ -64,6 +67,8 @@ export default function ProgressPage() {
         </div>
         <Badge variant="emerald">Historical Analytics</Badge>
       </div>
+
+      <DailyMetricForm onOpenWorkoutModal={() => setIsWorkoutModalOpen(true)} />
 
       {/* Recharts Analytics Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -189,6 +194,11 @@ export default function ProgressPage() {
           ))}
         </div>
       </div>
+
+      <LogWorkoutModal
+        isOpen={isWorkoutModalOpen}
+        onClose={() => setIsWorkoutModalOpen(false)}
+      />
 
     </div>
   );

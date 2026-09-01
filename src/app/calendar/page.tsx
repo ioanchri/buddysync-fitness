@@ -21,9 +21,11 @@ import {
   CheckCircle2,
   HelpCircle,
   Flame,
-  Footprints
+  Footprints,
+  Trash2
 } from 'lucide-react';
 import { useAppState } from '@/context/AppStateContext';
+import { LogWorkoutModal } from '@/components/dashboard/LogWorkoutModal';
 import { 
   format, 
   startOfMonth, 
@@ -38,11 +40,12 @@ import {
 } from 'date-fns';
 
 export default function CalendarPage() {
-  const { user, buddies, workouts, jointInvites, createWorkoutInvite, respondToInvite } = useAppState();
+  const { user, buddies, workouts, jointInvites, createWorkoutInvite, respondToInvite, deleteWorkout } = useAppState();
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
   const [isWorkoutDetailOpen, setIsWorkoutDetailOpen] = useState(false);
   const [selectedDayWorkouts, setSelectedDayWorkouts] = useState<typeof workouts>([]);
   const [isInviteDetailOpen, setIsInviteDetailOpen] = useState(false);
@@ -93,13 +96,14 @@ export default function CalendarPage() {
           </p>
         </div>
 
-        <Button
-          variant="primary"
-          onClick={() => setIsInviteModalOpen(true)}
-          leftIcon={<Plus className="w-4 h-4" />}
-        >
-          + Plan Joint Workout
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setIsWorkoutModalOpen(true)} leftIcon={<Dumbbell className="w-4 h-4" />}>
+            + Log Workout
+          </Button>
+          <Button variant="primary" onClick={() => setIsInviteModalOpen(true)} leftIcon={<Plus className="w-4 h-4" />}>
+            + Plan Joint Workout
+          </Button>
+        </div>
       </div>
 
       {/* Main Grid: Left Calendar View (2 cols), Right Pending Invites (1 col) */}
@@ -449,10 +453,31 @@ export default function CalendarPage() {
                   className="w-full h-40 object-cover rounded-xl"
                 />
               )}
+
+              <div className="flex justify-end border-t border-slate-200 dark:border-slate-800 pt-3">
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={async () => {
+                    await deleteWorkout(wo.id);
+                    setSelectedDayWorkouts(prev => prev.filter(workout => workout.id !== wo.id));
+                    if (selectedDayWorkouts.length <= 1) setIsWorkoutDetailOpen(false);
+                  }}
+                  leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+                >
+                  Delete
+                </Button>
+              </div>
             </div>
           ))}
         </div>
       </Modal>
+
+      <LogWorkoutModal
+        isOpen={isWorkoutModalOpen}
+        onClose={() => setIsWorkoutModalOpen(false)}
+        initialDate={format(selectedDate, 'yyyy-MM-dd')}
+      />
 
       {/* Joint Workout Invite Detail Modal */}
       <Modal

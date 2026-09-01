@@ -44,6 +44,7 @@ interface AppStateContextType {
   updateWorkout: (id: string, updates: Partial<Workout>) => Promise<void>;
   deleteWorkout: (id: string) => void;
   inviteBuddyByCode: (code: string) => Promise<{ success: boolean; message: string }>;
+  removeBuddy: (buddyId: string) => Promise<void>;
   addReaction: (itemId: string, emoji: string, message?: string) => void;
   createWorkoutInvite: (invite: { buddyId: string; scheduledAt: string; activityType: string; locationNotes?: string }) => void;
   respondToInvite: (inviteId: string, status: 'accepted' | 'declined' | 'completed' | 'missed') => void;
@@ -1158,6 +1159,20 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return { success: true, message: `Connected with ${newBuddy.full_name}!` };
   };
 
+  const removeBuddy = async (buddyId: string) => {
+    if (!user) return;
+
+    if (isSupabaseConfigured && supabase) {
+      await supabase
+        .from('buddies')
+        .delete()
+        .or(`and(requester_id.eq.${user.id},addressee_id.eq.${buddyId}),and(requester_id.eq.${buddyId},addressee_id.eq.${user.id})`);
+    }
+
+    setBuddies(prev => prev.filter(buddy => buddy.id !== buddyId));
+    setSharedFeed(prev => prev.filter(item => item.user_id !== buddyId));
+  };
+
   // ─── Reactions ────────────────────────────────────────────────────────────
   const addReaction = async (itemId: string, emoji: string, message?: string) => {
     if (!user) return;
@@ -1345,6 +1360,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       updateWorkout,
       deleteWorkout,
       inviteBuddyByCode,
+      removeBuddy,
       addReaction,
       createWorkoutInvite,
       respondToInvite,

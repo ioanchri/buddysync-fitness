@@ -14,6 +14,7 @@ interface LogWorkoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   workoutToEdit?: Workout | null;
+  initialDate?: string;
 }
 
 const CATEGORIES: WorkoutCategory[] = [
@@ -32,7 +33,7 @@ const CATEGORIES: WorkoutCategory[] = [
 
 const INTENSITIES: WorkoutIntensity[] = ['Low', 'Medium', 'High', 'Extreme'];
 
-export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClose, workoutToEdit }) => {
+export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClose, workoutToEdit, initialDate }) => {
   const { addWorkout, updateWorkout, dailyLogs, logDailyMetrics } = useAppState();
 
   const [title, setTitle] = useState('');
@@ -63,7 +64,7 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClos
 
     if (isOpen && !workoutToEdit) {
       setTitle('');
-      setLoggedDate(format(new Date(), 'yyyy-MM-dd'));
+      setLoggedDate(initialDate || format(new Date(), 'yyyy-MM-dd'));
       setCategory('Running');
       setDurationMinutes(30);
       setIntensity('High');
@@ -71,7 +72,7 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({ isOpen, onClos
       setPhotoUrl('');
       setStepsAdded(0);
     }
-  }, [isOpen, workoutToEdit]);
+  }, [initialDate, isOpen, workoutToEdit]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

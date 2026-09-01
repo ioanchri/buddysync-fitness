@@ -20,15 +20,17 @@ import {
   PartyPopper, 
   Check, 
   Copy,
-  Sparkles
+  Sparkles,
+  Trash2
 } from 'lucide-react';
 import { useAppState } from '@/context/AppStateContext';
+import { UserProfile } from '@/lib/types';
 import { format } from 'date-fns';
 
 const QUICK_EMOJIS = ['🔥', '🙌', '💪', '🎉', '❤️'];
 
 export default function BuddiesPage() {
-  const { user, buddies, sharedFeed, inviteBuddyByCode, addReaction } = useAppState();
+  const { user, buddies, sharedFeed, inviteBuddyByCode, addReaction, removeBuddy } = useAppState();
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteCodeInput, setInviteCodeInput] = useState('');
@@ -36,6 +38,7 @@ export default function BuddiesPage() {
 
   // Global override toggle to test both exact weight vs percentage change view for buddies!
   const [overridePrivacy, setOverridePrivacy] = useState<boolean | null>(null);
+  const [buddyToRemove, setBuddyToRemove] = useState<UserProfile | null>(null);
 
   const [commentInputs, setCommentInputs] = useState<{ [itemId: string]: string }>({});
 
@@ -86,22 +89,33 @@ export default function BuddiesPage() {
         </Button>
       </div>
 
-      {/* Connected Squad Members bar */}
-      <Card data-tour="buddies-squad" className="flex flex-wrap items-center justify-between gap-4 p-4">
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Connected Squad ({buddies.length}):</span>
-          <div className="flex items-center -space-x-2">
-            {buddies.map(b => (
-              <img
-                key={b.id}
-                src={b.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150'}
-                alt={b.full_name}
-                className="w-9 h-9 rounded-full object-cover ring-2 ring-emerald-500"
-                title={b.full_name}
-              />
+      {/* Connected Squad Members */}
+      <Card data-tour="buddies-squad" className="space-y-4 p-4">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Connected Squad ({buddies.length})</span>
+        </div>
+        {buddies.length > 0 && (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {buddies.map(buddy => (
+              <div key={buddy.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-900/50">
+                <div className="flex min-w-0 items-center gap-3">
+                  <img
+                    src={buddy.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150'}
+                    alt={buddy.full_name}
+                    className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-emerald-500"
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-slate-900 dark:text-white">{buddy.full_name}</p>
+                    <p className="font-mono text-[10px] text-slate-400">{buddy.invite_code}</p>
+                  </div>
+                </div>
+                <Button variant="danger" size="sm" onClick={() => setBuddyToRemove(buddy)} leftIcon={<Trash2 className="h-3.5 w-3.5" />}>
+                  Remove
+                </Button>
+              </div>
             ))}
           </div>
-        </div>
+        )}
 
         {/* View Privacy Mode Simulator */}
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -318,6 +332,27 @@ export default function BuddiesPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(buddyToRemove)}
+        onClose={() => setBuddyToRemove(null)}
+        title="Remove buddy?"
+        subtitle={buddyToRemove ? `Remove ${buddyToRemove.full_name} from your accountability squad and feed.` : undefined}
+      >
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="ghost" onClick={() => setBuddyToRemove(null)}>Cancel</Button>
+          <Button
+            variant="danger"
+            onClick={async () => {
+              if (buddyToRemove) await removeBuddy(buddyToRemove.id);
+              setBuddyToRemove(null);
+            }}
+            leftIcon={<Trash2 className="h-4 w-4" />}
+          >
+            Remove Buddy
+          </Button>
+        </div>
       </Modal>
 
     </div>
