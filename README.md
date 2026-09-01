@@ -134,3 +134,13 @@ Installed Android PWAs can receive a daily reminder at 8:00 PM in the device's l
 7. In BuddySync Profile & Goal Settings, select **Enable Daily Reminders** and accept the Android notification permission.
 
 Never expose `VAPID_PRIVATE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, or `PUSH_CRON_SECRET` in browser variables or source control.
+
+### Admin Broadcast Notifications
+
+The `/admin` route provides a broadcast form for signed-in administrators. Add `ADMIN_EMAILS` as a Supabase Edge Function secret using a comma-separated allow-list such as `admin@example.com,second-admin@example.com`, then deploy the function with JWT verification enabled:
+
+```bash
+npx supabase functions deploy send-admin-notification
+```
+
+The function verifies the caller's Supabase login token and their email server-side before sending to enabled devices. Do not deploy this function with `--no-verify-jwt`.

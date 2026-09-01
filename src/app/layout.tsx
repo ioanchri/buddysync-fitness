@@ -44,14 +44,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
-      <head>
-        {/* Apply saved theme before paint to avoid a flash of the wrong theme on refresh */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('buddysync_theme');if(t==='light'){document.documentElement.classList.remove('dark');}else{document.documentElement.classList.add('dark');}}catch(e){document.documentElement.classList.add('dark');}})();`,
-          }}
-        />
-      </head>
       <body className={`${inter.className} min-h-screen antialiased selection:bg-emerald-500 selection:text-white`}>
         <ServiceWorkerRegistration />
         <AppShell>{children}</AppShell>
